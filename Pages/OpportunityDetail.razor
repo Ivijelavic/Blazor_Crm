@@ -1,0 +1,77 @@
+﻿@page "/OpportunityDetail/{OpportunityId}"
+@using Radzen.Blazor
+@using CrmExpert.Data
+@using CrmExpert.Components
+@using CrmExpert.Model
+@inject OpportunityService productservice
+
+
+
+
+<AbsolutePanel AutoResize="true">
+    <VerticalSliderPanel LeftPanelStartingWidth="400">
+        <LeftChildContent>
+            <HorizontalSliderPanel PanelPosition="PanelPosition.Left"
+                                   TopStyleString="background-color:white;"
+                                   BottomStyleString="background-color:white;"
+                                   TopPanelHeight="500">
+                <TopChildContent>
+                    <div style="padding:10px;">
+                        <h3>Top Content 1</h3>
+                        <EditOpportunityComponent OpportunityId="@OpportunityId"></EditOpportunityComponent>
+                    </div>
+                </TopChildContent>
+                <BottomChildContent>
+                    <div style="padding:10px;">
+                        <h3>Bottom Content 1</h3>
+
+                    </div>
+                </BottomChildContent>
+            </HorizontalSliderPanel>
+        </LeftChildContent>
+        <RightChildContent>
+            <HorizontalSliderPanel PanelPosition="PanelPosition.Right"
+                                   TopStyleString="background-color:orange;"
+                                   BottomStyleString="background-color:yellow;"
+                                   TopPanelHeight="400">
+                <TopChildContent>
+                    <div style="padding:10px;">
+                        <h3>Top Content 2</h3>
+                    </div>
+                </TopChildContent>
+                <BottomChildContent>
+                    <div style="padding:10px;">
+                        <h3>Bottom Content 2</h3>
+                    </div>
+                </BottomChildContent>
+            </HorizontalSliderPanel>
+        </RightChildContent>
+    </VerticalSliderPanel>
+</AbsolutePanel>
+
+
+
+@code {
+
+    private string var;
+
+    [Parameter]
+    public string OpportunityId { get; set; }
+
+
+
+
+    protected  override void OnInitialized()
+    {
+
+
+        int id = Convert.ToInt32(OpportunityId);
+        if (id > 0)
+        {
+
+        }
+    }
+
+}
+
+

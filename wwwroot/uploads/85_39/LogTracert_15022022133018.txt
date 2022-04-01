@@ -1,0 +1,4 @@
+<tcpTraceLog tcpTraceVersion='0.8.1.717' xmlns='http://www.pocketsoap.com/tcptrace/xmlformat/01' xmlns:xsd='http://www.w3.org/1999/XMLSchema' xmlns:xsi='http://www.w3.org/1999/XMLSchema-instance'>
+<logStarted xsi:type='xsd:timeInstant'>2021-04-21T08:29:28+-2:00</logStarted>
+<logStopped xsi:type='xsd:timeInstant'>2021-04-21T08:29:34+-2:00</logStopped>
+</tcpTraceLog>

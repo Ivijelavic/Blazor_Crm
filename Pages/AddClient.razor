@@ -1,0 +1,592 @@
+﻿@page "/AddClient/{IdKlijent}/{IdKontakt}"
+@using Radzen.Blazor
+@using CrmExpert.Model
+@using CrmExpert.Data
+@inject NavigationManager NavigationManager
+@inject OpportunityService productservice
+
+
+
+
+<div class="container">
+    <EditForm Model=@klijent>
+        <DataAnnotationsValidator></DataAnnotationsValidator>
+
+
+
+
+        <div class="row no-gutters">
+            <div class="col-sm-6">
+
+                <div class="card">
+                    <h5 class="card-header">
+                        <i class="fas fa-user-lock"></i>&nbsp;&nbsp;&nbsp;Unos klijenta
+                    </h5>
+
+                    <div class="form-group row form-control-lg">
+                        <label class="col-sm-3 col-form-label" style="font-size: medium;">Tip klijenta:</label>
+                        <div class="col-sm-9">
+                            <div style="font-size:10px !important;">
+                                <RadzenDropDown AllowClear="true" TValue="string" AllowVirtualization="true" Class="form-control" Style="width:100%;font-size:medium;"
+                                                Placeholder="Odaberite tip klijenta" @bind-Value="@klijent.Tip"
+                                                AllowFiltering="false" Data=@tipklijenta TextProperty="Oznaka" ValueProperty="IDValute"
+                                                Change="@(args => ChangeBound(args, "TipKlijenta"))" />
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="collapse @(IsVisible ? "show" : "")">
+                        <div class="form-group row form-control-lg">
+                            <label class="col-sm-3 col-form-label" style="font-size: medium;">@imeosobe: </label>
+                            <div class="col-sm-9">
+                                <div style="font-size:10px !important;">
+                                    <RadzenTextBox @ref="imeTxt" Class="form-control" @bind-Value="@klijent.Ime" Style="width:100%;font-size:medium;"
+                                                   Change="@(args => ChangeBound(args, "Ime"))" />
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row form-control-lg">
+                        <label class="col-sm-3 col-form-label" style="font-size: medium;">@ime: </label>
+                        <div class="col-sm-9">
+                            <div style="font-size:10px !important;">
+                                <RadzenTextBox @ref="imefirmeTxt" id="opis" Class="form-control" @bind-Value="@klijent.ImeTvrtke" Style="width:100%;font-size:medium;" Disabled="@odaberitip"
+                                               Change="@(args => ChangeBound(args, "ImeTvrtke"))" />
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row form-control-lg mt-2">
+                        <label class="col-sm-3 col-form-label" style="font-size:medium;">Adresa:</label>
+                        <div class="col-sm-9">
+                            <div style="font-size:10px !important;">
+                                <RadzenTextBox @ref="adresaTxt" Class="form-control" @bind-Value="@klijent.Adresa" @bind-Value:format="oninput"
+                                               Disabled="@odaberitip" Style="width:100%;font-size:medium;"
+                                               Change="@(args => ChangeBound(args, "Adresa"))">
+                                </RadzenTextBox>
+                                <ValidationMessage For="(()=>klijent.Adresa)"></ValidationMessage>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row form-control-lg mt-2">
+                        <label class="col-sm-3 col-form-label" style="font-size: medium;">Poštanski broj::</label>
+                        <div class="col-sm-9">
+                            <div style="font-size:10px !important;">
+                                <RadzenTextBox @ref="postbrTxt" Class="form-control" @bind-Value="@klijent.PostanskiBroj" Style="width:100%;font-size:small;" Disabled="@odaberitip"
+                                               Change="@(args => ChangeBound(args, "Postbroj"))">
+                                </RadzenTextBox>
+                                <ValidationMessage For="(()=>klijent.PostanskiBroj)"></ValidationMessage>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row form-control-lg mt-2">
+                        <label class="col-sm-3 col-form-label" style="font-size: medium;">Sjedište:</label>
+                        <div class="col-sm-9">
+                            <div style="font-size:10px !important;">
+                                <RadzenTextBox @ref="sjedisteTxt" Class="form-control" @bind-Value="@klijent.Sjediste" Style="width:100%;font-size:medium;" Disabled="@odaberitip"
+                                               Change="@(args => ChangeBound(args, "Sjediste"))"></RadzenTextBox>
+                                <ValidationMessage For="(()=>klijent.Sjediste)"></ValidationMessage>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row form-control-lg mt-2">
+                        <label class="col-sm-3 col-form-label" style="font-size: medium;">OIB/VAT:</label>
+                        <div class="col-sm-9">
+                            <div style="font-size:10px !important;">
+                                <RadzenTextBox @ref="oibTxt" Class="form-control" @bind-Value="@klijent.OIB" Disabled="@odaberitip"
+                                               Change="@(args => ChangeBound(args, "Oib"))"></RadzenTextBox>
+                                <ValidationMessage For="(()=>klijent.OIB)"></ValidationMessage>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="collapse @(IsVisibleMb ? "show" : "")">
+                        <div class="form-group row form-control-lg mt-2">
+                            <label class="col-sm-3 col-form-label" style="font-size: medium;">Matični broj(MBO):</label>
+                            <div class="col-sm-9">
+                                <div style="font-size:10px !important;">
+                                    <RadzenTextBox @ref="mboTxt" id="opis" Class="form-control" @bind-Value="@klijent.MB" Style="width:100%;font-size:medium;"
+                                                   Change="@(args => ChangeBound(args, "Mbo"))" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row form-control-lg mt-2">
+                        <label class="col-sm-3 col-form-label" style="font-size: medium;">Email:</label>
+                        <div class="col-sm-9">
+                            <div style="font-size:10px !important;">
+                                <RadzenTextBox @ref="emailTxt" Id="body" Class="form-control" @bind-Value="@klijent.EmailAdresa" Disabled="@odaberitip"
+                                               Change="@(args => ChangeBound(args, "Email"))"></RadzenTextBox>
+                                <ValidationMessage For="(()=>klijent.EmailAdresa)"></ValidationMessage>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row form-control-lg mt-2">
+                        <label class="col-sm-3 col-form-label" style="font-size: medium;">Kontakt:</label>
+                        <div class="col-sm-9">
+                            <div style="font-size:10px !important;">
+                                <RadzenTextBox Id="body" Class="form-control" @bind-Value="@klijent.KontaktOsoba" Disabled="@odaberitip"
+                                               Change="@(args => ChangeBound(args, "Kontakt"))"></RadzenTextBox>
+                                <ValidationMessage For="(()=>klijent.KontaktOsoba)"></ValidationMessage>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row form-control-lg mt-2">
+                        <label class="col-sm-3 col-form-label" style="font-size: medium;">Sektor:</label>
+                        <div class="col-sm-9">
+                            <div style="font-size:10px !important;">
+                                <RadzenDropDown AllowClear="true" TValue="int" AllowVirtualization="true" Style="width:100%" Disabled="@odaberitip"
+                                                AllowFiltering="false" Data=@sektors TextProperty="Opis" ValueProperty="id" @bind-Value="@broj"
+                                                Change="@(args => ChangeBound(args, "Sektor"))" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row form-control-lg mt-2">
+                        <label class="col-sm-3 col-form-label" style="font-size: medium;">Transektori:</label>
+                        <div class="col-sm-9">
+                            <div style="font-size:10px !important;">
+                                <RadzenAutoComplete Data=@transectors TextProperty="SifraOpis" Disabled="@odaberitip" Placeholder="@transsektor"
+                                                    Style="width:100%" Change="@(args => Change(args))" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row form-control-lg mt-2 ">
+                        <label class="col-sm-3 col-form-label" style="font-size: medium;">Država:</label>
+                        <div class="col-sm-9">
+                            <div style="font-size:10px !important;">
+                                <RadzenDropDown AllowClear="true" TValue="string" AllowVirtualization="true" Style="width:100%" Disabled="@odaberitip"
+                                                AllowFiltering="false" Data=@drzave TextProperty="Drzava" ValueProperty="Drzava" @bind-Value="@klijent.Drzava"
+                                                Change="@(args => ChangeBound(args, "drzava"))" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="collapse @(IsVisibleCountry ? "show" : "")">
+                        <div class="form-group row form-control-lg mt-2">
+                            <label class="col-sm-3 col-form-label" style="font-size: medium;">Država:</label>
+                            <div class="col-sm-9">
+                                <div style="font-size:10px !important;">
+
+
+                                    &nbsp;&nbsp;&nbsp;<RadzenCheckBox TValue="bool" Name="CheckBox2" Change="@(args => ChangeBound(args, "eu"))" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group row form-control-sm">
+                    </div>
+
+
+                </div>
+
+            </div>
+
+
+            <div class="col-sm-6">
+                <div class="card h-100" >
+                    <KontaktComponent @ref="Kontaktomp" IdKlijent=@IdKlijent OnClick="ClickHandler" />
+                    @if (kontakti != null)
+                    {
+                        int i = 0;
+
+
+                        <div class="card">
+                            <div class="card-body">
+                                Kontakti:
+                                <table>
+                                    @foreach (KontaktiView item in kontakti)
+                                    {
+                                        i++;
+                                        <tr>
+                                            <td>@i.</td>
+                                            <td style="font-size:small;"><button style="border:none;background-color:white;" @onclick="@(args =>TestPost(item))">@(item.Ime +" "+ item.Prezime + "    :    " + item.EmailAdresa)</button></td>
+                                        </tr>
+
+                                    }
+                                </table>
+
+                            </div>
+
+                        </div>
+
+
+                    }
+                </div>
+            </div>
+        </div>
+
+
+                    <div class="row">
+                        <div class="col-sm">
+
+                            <div class="card-header">
+
+                                <input type="submit" value="Submit" class="btn btn-primary" @onclick="@FormSubmitted" Disabled="@odaberitip" />
+
+                                <div class="panel-body panel-default  @(Collapsed? "collapse": "")">
+                                    <div class=@poruka>
+                                        @Status
+                                    </div>
+
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+
+
+
+
+
+</EditForm>
+</div>
+
+
+
+
+    
+
+
+
+@code {
+
+    protected KontaktComponent Kontaktomp;
+    void ClickHandler(KontaktiView newKontakt)
+    {
+        if (kontakti == null)
+        {
+            kontakti = new();
+
+        }
+
+        kontakti.Add(newKontakt);
+    }
+    public void TestPost(object value)
+    {
+        KontaktiView convertedObject = (KontaktiView)value;
+        kontakti.Remove(convertedObject);
+    }
+
+
+    RadzenTextBox imefirmeTxt;
+    RadzenTextBox adresaTxt;
+    RadzenTextBox postbrTxt;
+    RadzenTextBox sjedisteTxt;
+    RadzenTextBox emailTxt;
+    RadzenTextBox oibTxt;
+    RadzenTextBox imeTxt;
+    RadzenTextBox mboTxt;
+
+
+
+
+    public List<int> ListaKontakata { get; set; }
+
+    IEnumerable<KontaktiView> kontaktils;
+    object IdKontaktls;
+    List<int> collection;
+
+    /****************fake************/
+
+
+
+    public bool Collapsed { get; set; } = true;
+    public string poruka = "alert alert-danger";
+
+
+    [Parameter]
+    public string IdKlijent { get; set; }
+
+    [Parameter]
+    public string IdKontakt { get; set; }
+
+    protected bool IsVisibleMb { get; set; } = false;
+    protected bool IsVisible { get; set; }
+    protected bool IsVisibleCountry { get; set; } = false;
+
+
+    void OnChangeKontakti(object value, string name)
+    {
+        if (ListaKontakata != null)
+        {
+            ListaKontakata.Clear();
+        }
+        else
+        {
+            ListaKontakata = new();
+        }
+        if (value != null)
+        {
+            List<int>
+                collection = new List<int>
+                    ((IEnumerable<int>
+                        )value);
+            if (collection.Count > 0)
+            {
+                foreach (int num in collection)
+                {
+                    ListaKontakata.Add(num);
+                }
+            }
+        }
+    }
+
+    void clickime()
+    {
+        IsVisible = !IsVisible;
+    }
+
+    //Klijenti klijent = new Klijenti();
+    string Status = "Upis klijenta";
+    IEnumerable<Status>
+        statusi;
+
+    object Id_Statusa { get; set; }
+    private string var;
+
+    List<string>
+        tipklijenta = new List<string>
+            ();
+    string ime { get; set; } = "Klijent?";
+    string imeosobe { get; set; } = "Ime";
+    void OnChange(object value, string name)
+    {
+        if (name == "AutoComplete")
+        {
+            klijent.TranSektor = value.ToString();
+        }
+        if (name == "Kontaktils")
+        {
+            if (value != null)
+            {
+                collection = new List<int>
+                    ((IEnumerable<int>
+                        )value);
+
+            }
+
+        }
+    }
+    void Change(object value)
+    {
+        if (value.ToString().Length > 5)
+        {
+            string str = value.ToString().Substring(0, 2);
+            klijent.TranSektor = str;
+        }
+    }
+    async Task FormSubmitted()
+    {
+        bool validated = true;
+        //Status = "Form submitted";
+        Collapsed = true;
+
+        if (klijent.Tip == null)
+        {
+            validated = false;
+            Status = "Odaberite tip klijenta!";
+            Collapsed = false;
+            poruka = "alert alert-danger";
+            //await Task.Delay(2000);
+            //Collapsed = true;
+            return;
+        }
+        if (klijent.Tip == "FIZIČKA OSOBA")
+        {
+            if (klijent.Sjediste == null)
+            {
+                validated = false;
+                Status = "Upšite ime osobe!";
+                await imeTxt.Element.FocusAsync();
+                Collapsed = false;
+                poruka = "alert alert-danger";
+                //await Task.Delay(2000);
+                //Collapsed = true;
+                return;
+            }
+        }
+        if (klijent.ImeTvrtke == null)
+        {
+            validated = false;
+            Status = "Upšite ime tvrtke!";
+            Collapsed = false;
+            await imefirmeTxt.Element.FocusAsync();
+            poruka = "alert alert-danger";
+            //await Task.Delay(2000);
+            //Collapsed = true;
+
+            return;
+        }
+        if (klijent.Adresa == null)
+        {
+            validated = false;
+            Status = "Upšite adresu tvrtke!";
+            await adresaTxt.Element.FocusAsync();
+            Collapsed = false;
+            poruka = "alert alert-danger";
+            //await Task.Delay(2000);
+            //Collapsed = true;
+            return;
+        }
+        if (klijent.PostanskiBroj == null)
+        {
+            validated = false;
+            Status = "Upšite poštanski broj tvrtke!";
+            await postbrTxt.Element.FocusAsync();
+            Collapsed = false;
+            poruka = "alert alert-danger";
+            //await Task.Delay(2000);
+            //Collapsed = true;
+            return;
+        }
+        if (klijent.Sjediste == null)
+        {
+            validated = false;
+            Status = "Upšite mjesto/grad tvrtke!";
+            await sjedisteTxt.Element.FocusAsync();
+            Collapsed = false;
+            poruka = "alert alert-danger";
+            //await Task.Delay(2000);
+            //Collapsed = true;
+            return;
+        }
+        if (klijent.EmailAdresa == null)
+        {
+            validated = false;
+            Status = "Upšite Email !";
+            await emailTxt.Element.FocusAsync();
+            Collapsed = false;
+            poruka = "alert alert-danger";
+            //await Task.Delay(2000);
+            //Collapsed = true;
+            return;
+        }
+
+
+        //if (klijent.Tip == "PRAVNA OSOBA")
+        //{
+        if (klijent.OIB == null)
+        {
+            validated = false;
+            Status = "Upšite OIB!";
+            await oibTxt.Element.FocusAsync();
+            Collapsed = false;
+            poruka = "alert alert-danger";
+            //await Task.Delay(2000);
+            //Collapsed = true;
+            return;
+        }
+        else
+        {
+            String strOib = String.Empty;
+            bool isOibTrue = Library.ClientCheck.OIBjeISPRAVAN(klijent.OIB,out strOib);
+            if (!isOibTrue)
+            {
+                validated = false;
+                Status = "Neispravan OIB!";
+                await oibTxt.Element.FocusAsync();
+                Collapsed = false;
+                poruka = "alert alert-danger";
+                return;
+            }
+            else
+            {
+                klijent.OIB = strOib;
+            }
+        }
+
+        //}
+        //else if (klijent.Tip == "OBRTNIK")
+        //{
+        //    if (klijent.MB == null)
+        //    {
+        //        validated = false;
+        //        Status = "Upšite MBO!";
+        //        await mboTxt.Element.FocusAsync();
+        //        Collapsed = false;
+        //        poruka = "alert alert-danger";
+        //        //await Task.Delay(2000);
+        //        //Collapsed = true;
+        //        return;
+        //    }
+        //}
+
+        if (klijent.Sektor == null)
+        {
+            validated = false;
+            Status = "Odaberite Sektor !";
+            await emailTxt.Element.FocusAsync();
+            Collapsed = false;
+            poruka = "alert alert-danger";
+            //await Task.Delay(2000);
+            //Collapsed = true;
+            return;
+        }
+        if (klijent.TranSektor == null)
+        {
+            validated = false;
+            Status = "Odaberite TranSektor !";
+            await emailTxt.Element.FocusAsync();
+            Collapsed = false;
+            poruka = "alert alert-danger";
+            //await Task.Delay(2000);
+            //Collapsed = true;
+            return;
+        }
+        if (kontakti != null)
+        {
+            if (ListaKontakata == null)
+            {
+                ListaKontakata = new();
+
+            }
+            else
+            {
+                ListaKontakata.Clear();
+            }
+            foreach (KontaktiView iduser in kontakti)
+            {
+                ListaKontakata.Add(iduser.id);
+            }
+        }
+        if (validated)
+        {
+
+
+            int i = productservice.InsClient(klijent, ListaKontakata);
+            //int i = productservice.InsClient(klijent, kontakti);
+            if (i == 1)
+            {
+
+                //NavigationManager.NavigateTo("/DataManager");
+                Status = "Klijent je uspješno pohranjen.";
+                Collapsed = false;
+                poruka = "alert alert-success";
+                await Task.Delay(7000);
+                Collapsed = true;
+            }
+            else
+            {
+                Status = "Došlo je do greške prilikom spremanja klijenta";
+                Collapsed = false;
+                poruka = "alert alert-danger";
+                await Task.Delay(7000);
+                Collapsed = true;
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+}
+
+
+

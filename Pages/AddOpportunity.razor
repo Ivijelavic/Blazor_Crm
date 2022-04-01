@@ -1,0 +1,66 @@
+﻿@page "/AddOpportunity/{OpportunityId}"
+@using Radzen.Blazor
+@using CrmExpert.Model
+@using CrmExpert.Data
+@inject NavigationManager NavigationManager
+@inject OpportunityService productservice
+
+
+
+
+
+
+
+<RadzenDropDown AllowClear="true" AllowFiltering="true"
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                @bind-Value=@IdKontaktls Multiple="true"
+                Placeholder="Select..." Data=@kontaktils
+                TextProperty="ImeTvrtke"
+                ValueProperty="IDKlijenta"
+                Change=@(args => OnChangeKlijenti(args,"kontakti"))  />
+@code
+{
+    [Parameter]
+    public string OpportunityId { get; set; }
+    public List<int> ListaKontakata { get; set; }
+
+    IEnumerable<KolijentView> kontaktils;
+    object IdKontaktls;
+    List<int> collection;
+
+    protected override void OnInitialized()
+    {
+
+        kontaktils = productservice.GetKlientsListIEN().ToList();
+    }
+
+
+
+
+    void OnChangeKlijenti(object value, string name)
+    {
+        if (ListaKontakata != null)
+        {
+            ListaKontakata.Clear();
+        }
+        else
+        {
+            ListaKontakata = new();
+        }
+        if (value != null)
+        {
+            List<int> collection = new List<int>((IEnumerable<int>)value);
+            if (collection.Count > 0)
+            {
+                foreach (int num in collection)
+                {
+                    ListaKontakata.Add(num);
+                }
+            }
+        }
+    }
+
+
+
+
+}

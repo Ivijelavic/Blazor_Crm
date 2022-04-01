@@ -1,0 +1,305 @@
+﻿@page "/OppDetail/{OpportunityId}"
+@using Radzen.Blazor
+@using CrmExpert.Data
+@using CrmExpert.Components
+@using CrmExpert.Model
+@using System.IO;
+@using Microsoft.AspNetCore.Hosting
+@inject IWebHostEnvironment env
+@inject OpportunityService productservice
+@inject IJSRuntime JS
+@using CrmExpert.Services
+@inject BrowserService Service
+
+<div class="row no-gutters">
+    <div class="col-12 col-sm-6 col-md-6">
+        <div class="card flex-fill">
+            <div class="card">
+                <h5 class="card-header">
+                    <span style="color:@boja;font-size:15px;"><i class=@icon></i>&nbsp;&nbsp;@vrsta:&nbsp;&nbsp;</span>@klijent 
+                </h5>
+                <OppDetailComponent OpportunityId="@OpportunityId" OnClick="ClickHandler"> </OppDetailComponent>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-6">
+        <div class="card flex-fill">
+            <h5 class="card-header">
+                <i class="fas fa-landmark"></i>&nbsp;&nbsp;&nbsp;Komentari
+            </h5>
+
+
+
+
+
+            <div style="height:@height;overflow-y: scroll;">
+                <div class="overflow-auto">
+                    <CommentsComponent OpportunityId="@OpportunityId"></CommentsComponent>
+                </div>
+            </div>
+
+
+
+
+        </div>
+
+
+        <ScoringComponent @ref="ScoringComp" OpportunityId="@OpportunityId" KlientOib="@_oib"></ScoringComponent>
+
+
+
+    </div>
+</div>
+<div class="row no-gutters">
+    <div class="col-12 col-sm-12 col-md-12">
+        <div class="card  flex-fill">
+            <RadzenTabs Style="@($"height:{@myheight}")">
+                <Tabs>
+                    <RadzenTabsItem Text="Dobavljači">
+                        <ListOfLstPonudaDobComponent OpportunityId="@OpportunityId"></ListOfLstPonudaDobComponent>
+                    </RadzenTabsItem>
+                    <RadzenTabsItem Text="Ponude">
+                        <ListOfPonudePrilika OpportunityId="@OpportunityId">
+                        </ListOfPonudePrilika>
+                    </RadzenTabsItem>
+                    <RadzenTabsItem Text="Dok.">
+
+                        <div class="card" style="margin-top:0px;">
+                            <div class="card-header">
+                                Zahtjev: prilozi
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">@Message</p>
+                                <form @onsubmit="OnSubmit">
+                                    <InputFile OnChange="OnInputFileChange" multiple />
+                                    <br /><br />
+                                    <button type="submit" class="btn btn-primary">Spremi  dokumente!</button>
+                                </form>
+                            </div>
+                        </div>
+                        @if (dokumentiZahtjeva.Count > 0)
+                        {
+                            int br = 0;
+                            string strUrlPdf = string.Empty;
+                    <div class="container">
+                        
+                        @foreach (var item in dokumentiZahtjeva)
+                        {
+                            br = br + 1;
+                            strUrlPdf = "./uploads/" + item.Id_Zahtjeva  + "/" + item.Naziv;
+
+                            <div class="row">
+                                <div class="col-xs-12">
+                                    <a href=@strUrlPdf target="blank">
+                                        <b>@br.</b>&nbsp;&nbsp;
+                                        @item.Naziv&nbsp;&nbsp;&nbsp;&nbsp;
+
+                                        @item.CreateBy&nbsp;&nbsp;&nbsp;&nbsp;
+
+                                        @item.CreateDate&nbsp;&nbsp;&nbsp;&nbsp;
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                        }
+                    </RadzenTabsItem>
+                </Tabs>
+            </RadzenTabs>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+@code {
+
+    IReadOnlyList<IBrowserFile> selectedFiles;
+    string Message = "Selektirajte prilog!";
+    void OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        selectedFiles = e.GetMultipleFiles();
+        Message = $"{selectedFiles.Count} ponude je selektirano";
+        this.StateHasChanged();
+    }
+    async void OnSubmit()
+    {
+
+        string fileName = string.Empty;
+        foreach (var file in selectedFiles)
+        {
+            try
+            {
+                fileName = file.Name;
+
+                int extensionIndex = fileName.LastIndexOf(".");
+                string fileExtension = fileName.Substring(extensionIndex);
+                fileName = fileName.Substring(0, extensionIndex);
+                fileName += ("_" + GetTimestamp(DateTime.Now) + fileExtension);
+
+
+                Stream stream = file.OpenReadStream(22000000000, default);
+                String tenOp = OpportunityId.ToString();
+                var pathdobavljac = $"{env.WebRootPath}\\uploads\\" + tenOp;
+                var pathtest = $"{env.WebRootPath}\\uploads\\{file.Name}";
+                bool exists = System.IO.Directory.Exists(pathdobavljac);
+                if (!exists) System.IO.Directory.CreateDirectory(pathdobavljac);
+                var path = $"{env.WebRootPath}\\uploads\\" + tenOp + "\\" + fileName;
+                FileStream fs = File.Create(path);
+                await stream.CopyToAsync(fs);
+                stream.Close();
+                fs.Close();
+                getUplPonuda(fileName, Convert.ToInt32(OpportunityId));
+                Message = $"{selectedFiles.Count} ponude je spremljena na server!";
+            }
+            catch (Exception ex)
+            {
+                Message = $"{ex}";
+                //ex throw;
+            }
+
+
+        }
+
+        this.StateHasChanged();
+    }
+
+    public static String GetTimestamp(DateTime value)
+    {
+        return value.ToString("ddMMyyyyHHmmss");
+    }
+
+
+
+    public void getUplPonuda(String Naziv, int idZahtj)
+    {
+        Ponude_Dobavljaci_Documents PonudaDobDoc = new();
+        try
+        {
+            PonudaDobDoc.Uid_Dokument = Guid.NewGuid();
+            PonudaDobDoc.Naziv = Naziv;
+            PonudaDobDoc.ChangeDate = DateTime.Now;
+            PonudaDobDoc.CreateDate = DateTime.Now;
+            PonudaDobDoc.ChangeBy = "User";
+            PonudaDobDoc.CreateBy = "User";
+            PonudaDobDoc.Id_PonudeDobavljaca = 0;
+            PonudaDobDoc.Id_Zahtjeva = idZahtj;
+            int resp = productservice.InsDokDobavljac(PonudaDobDoc);
+
+
+        }
+        catch (Exception ex)
+        {
+
+            //throw; ex
+        }
+
+    }
+    /********************************************************/
+
+    List<Ponude_Dobavljaci_Documents> dokumentiZahtjeva;
+
+
+
+    /*********************************************************/
+    public int Height { get; set; }
+    public int Width { get; set; }
+    public string height { get; set; }
+
+    async Task GetDimensions()
+    {
+        var dimension = await Service.GetDimensions();
+        Height = dimension.Height;
+        Width = dimension.Width;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await GetDimensions();
+        // StateHasChanged();
+        if (Width < 700)
+        {
+            height = "300px";
+        }
+        else
+        {
+            height = "605px";
+        }
+        StateHasChanged();
+    }
+    /**********************************************************/
+    string message = "Hello from ParentComponent";
+
+    void ClickHandler(string newMessage)
+    {
+        message = newMessage;
+        Change(null);
+    }
+
+    string myheight = "480px";
+    private string var;
+
+    [Parameter]
+    public string OpportunityId { get; set; }
+
+    [Parameter]
+    public string _oib { get; set; }
+
+    ResultViewOpportunity title = new ResultViewOpportunity();
+
+    string vrsta;
+    string icon;
+    string boja;
+
+    public string klijent { get; set; }
+
+
+    protected async override void OnInitialized()
+    {
+
+
+        int id = Convert.ToInt32(OpportunityId);
+        if (id > 0)
+        {
+            title = productservice.OpportunityById(id);
+            klijent = title.ImeKlijenta;
+            vrsta = title.Vrsta_Prilika_Naziv;
+            _oib = title.Oib;
+            if (vrsta == "Leasing")
+            {
+                icon = "fas fa-box-open";
+                boja = "black";
+            }
+            if (vrsta == "Prodaja")
+            {
+                icon = "fas fa-hand-holding-usd";
+                boja = "brown";
+            }
+            if (vrsta == "Najam")
+            {
+                icon = "fas fa-dolly";
+                boja = "green";
+            }
+            dokumentiZahtjeva = await productservice.GetDokZahtjev(id);
+        }
+
+    }
+
+
+    public async void KlientChanged(string username)
+    {
+        await Task.Delay(2000);
+
+        Console.WriteLine("Sorry for the delay...\n");
+        _oib = username;
+    }
+
+    protected ScoringComponent ScoringComp;
+    private void Change(TreeEventArgs args)
+    {
+        ScoringComp.RefreshMe(message);
+    }
+}
+

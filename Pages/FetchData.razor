@@ -1,0 +1,204 @@
+﻿@page "/fetchdata/{uidDocument}"
+@using Radzen
+@using CrmExpert.Data
+@using Radzen.Blazor
+@using CrmExpert.Components
+@using CrmExpert.Model
+@using Microsoft.AspNetCore.Html;
+@using System.Text.RegularExpressions
+@inject OpportunityService productservice
+@inherits LayoutComponentBase
+
+
+
+@{
+    @layout Empty;
+
+}
+
+
+
+<div style="width:100%;">
+    <div class="col">
+        <table style="vertical-align: bottom;">
+            <tr>
+                @convertedMarkdown
+            </tr>
+        </table>       
+    </div>
+</div>
+
+
+
+
+@code {
+
+    Prilike opp;
+
+    public string postovani;
+    public string postovanicontent, postovanicontent1, financiranjeputem,
+                  kolaterali, kolateralicontent, ostuvj, ostuvjcontenet, ostuvjcontenet1, ostuvjcontenet2, vnk;
+    public Klijenti klijent;
+    List<ListaPonudaDobavljaciView> selected;
+    public string dobavljaci;
+
+    [Parameter]
+    public string uidDocument { get; set; }
+    PonudePrilika Ponuda = new();
+    string odrzavanjemj { get; set; }
+    string vrijednost { get; set; }
+    string rataleasinga { get; set; }
+    string naslov { get; set; }
+    string detalji { get; set; }
+    string datum { get; set; }
+    string ucesce { get; set; }
+    string placanje { get; set; }
+    string trobr { get; set; }
+    string brRata { get; set; }
+    string valuta { get; set; }
+    string jamcevina { get; set; }
+    string akontacija { get; set; }
+    string ostvrijednosti { get; set; }
+    string trobrade { get; set; }
+    string kam { get; set; }
+    HtmlTemplate htmlTemplate;
+
+    string header { get; set; }
+    private MarkupString convertedMarkdown;
+
+    protected async override void OnInitialized()
+    {
+
+
+        //String str = header.Replace("@adresa", wwww).Replace("@param1", param).Replace("@rrrr", rrrr);
+        //var html = Markdig.Markdown.ToHtml(header ?? "");
+        //convertedMarkdown = (MarkupString)html;
+        //var h = new HtmlString(tskheader.Result);
+        //header = h.ToString();
+
+        postovani = "Poštovani,";
+        postovanicontent = "Na osnovu predočene ponude dobavljača ";
+        postovanicontent1 = " izrađene prema Vašim zahtjevima, " +
+        " možemo Vam ponuditi sljedeće uvjete financiranja:";
+        Guid uid = new(uidDocument);
+        Ponuda = productservice.getOffbyGuid(uid);
+
+
+
+
+        opp = productservice.getOppObjById(Ponuda.idPrilike);
+        klijent = productservice.GetClientById(opp.Id_Klijenta);
+        Task<string> tskheader = productservice.getHeader(Ponuda.idHtmltemplate);
+        header = tskheader.Result;
+        selected = await productservice.PonudaDobavljaciList(Ponuda.idListePonuda, Ponuda.idPrilike);
+        foreach (ListaPonudaDobavljaciView pr in selected)
+        {
+            dobavljaci = dobavljaci + pr.ImeDobavljaca;
+        }
+        vrijednost =  FormattedAmount(Ponuda.VrijObjLease);
+        odrzavanjemj = "Rok otplate od(mj.): " + Ponuda.VremPerMj.ToString() + "mj.";
+        rataleasinga =  FormattedAmount(Ponuda.RataLeasinga);
+        naslov = productservice.GetVrstaLeasinga(Ponuda.Id_Vrsta_Leasinga) + " LEASING";
+        detalji = Ponuda.Broj.ToString() + "/" + Ponuda.Godina.ToString();
+        datum =  Ponuda.CreateDate.ToShortDateString();
+        ucesce = "Učešće: " + FormattedAmount(Ponuda.Ucesce); // Ponuda.Ucesce.ToString();
+        financiranjeputem = "Financiranje putem " + productservice.GetNacinPlacanjaById(Ponuda.NacinPl).ToUpper();
+        placanje =  productservice.GetNacinPlacanjaById(Ponuda.NacinPl);
+        brRata =  brRataOtpl(Ponuda.NacinPl, Ponuda.VremPerMj).ToString();
+        kolaterali = "Potrebni kolaterali:";
+        kolateralicontent = "U svrhu osiguranja poštivanja obaveza, Primatelj leasinga pri potpisivanju ugovora treba uručiti Davatelju leasinga zadužnicu prema predlošku Davatelja leasinga potvrđenu po javnom bilježniku i dvije bjanko mjenice s klauzulom 'bez protesta'.";
+        ostuvj = "Ostali uvjeti:";
+        ostuvjcontenet = "Ostvarivanje poslovnog odnosa temeljem ove ponude podrazumijeva sklapanje ugovora o leasingu prema uvjetima definiranim u ponudi te početak važenja ugovora po isporuci objekta leasinga i primitku ovjerenog primopredajnog zapisnika. ";
+        ostuvjcontenet1 = "Oprema treba tijekom cijelog trajanja ugovora biti pokrivena jamstvom na rok trajanja ugovora.";
+        ostuvjcontenet2 = "Uz ovu ponudu nudimo i paket proširenog jamstva SafeGuard.U okviru ove usluge davatelj leasinga sam osigurava opremu u leasingu s pokrićem police osiguranja elektronskih uređaja gdje su osigurani rizici primjereni štetema i rizicima korištenja objekta leasinga te je u tom slučaju primatelj leasinga dužan samo prijaviti štetu, a sve ostalo je briga davatelja leasinga." +
+            "Ukoliko prošireno jamstvo nije primjenjivo ili primatelj leasinga ne prihvaća ponudu proširenog jamstva, obvezan je objekt leasinga sam osigurati. Polica osiguranja u tom slučaju mora minimalno sadržavati pokriće požara, izljeva vode, loma te provalne krađe i razbojstva. ";
+        vnk = "Vrijednost nominalne kamate:" + Ponuda.FaktorKamate;
+        trobr = "Troškovi obrade zahtjeva:" + FormattedAmount(Ponuda.TrObr);
+        valuta = productservice.OznakaValute(Ponuda.ValPon);
+        decimal wjamcevina = (Ponuda.VrijObjLease / 100) * Ponuda.Jamcevina;
+        jamcevina = FormattedAmount(wjamcevina);
+        decimal wakontacija = (Ponuda.VrijObjLease / 100) * Ponuda.Akontacija;
+        akontacija = FormattedAmount(wakontacija);
+        decimal wostvrijednosti = (Ponuda.VrijObjLease / 100) * Ponuda.OstVr;
+        ostvrijednosti = FormattedAmount(wostvrijednosti);
+        decimal wtrobrade = (Ponuda.VrijObjLease / 100) * Ponuda.TrObr;
+        trobrade = FormattedAmount(wtrobrade);
+        Users uKam;
+        try
+        {
+            if (opp.idORGINATOR > 0)
+            {
+                uKam = productservice.GetKamById(opp.idORGINATOR);
+                kam = uKam.Ime + " " + uKam.Prezime;
+            }
+            else
+            {
+                kam = "Nepoznat";
+            }
+
+        }
+        catch (Exception)
+        {
+
+            kam = "Nepoznat";
+        }
+
+        String str = header.Replace("@Klijent", klijent.ImeTvrtke)
+        .Replace("@Adresa", klijent.Adresa)
+        .Replace("@Posta", klijent.PostanskiBroj)
+        .Replace("@Grad", klijent.Sjediste)
+        .Replace("@OIB", klijent.OIB)
+        .Replace("@BrPonude", detalji)
+        .Replace("@DatumPonude", datum)
+        .Replace("@Dobavljac", dobavljaci)
+        .Replace("@VrijednostOpreme", vrijednost)
+        .Replace("@Valuta", valuta)
+        .Replace("@VrstaLeasinga", naslov)
+        .Replace("@Trajanje", brRata)
+        .Replace("@Jamcevina", jamcevina)
+        .Replace("@Akontacija", akontacija)
+        .Replace("@RataLeasinga", rataleasinga)
+        .Replace("@Placanje", placanje)
+        .Replace("@BrojRata", brRata)
+        .Replace("@OstatakVrijednosti", ostvrijednosti)
+        .Replace("@TrosakObrade", trobrade)
+        .Replace("@UkupanIznosNaknada", placanje)
+        .Replace("@KAM", kam);
+
+
+
+
+
+
+        var html = Markdig.Markdown.ToHtml(str ?? "");
+        convertedMarkdown = (MarkupString)html;
+
+    }
+    public string FormattedAmount(decimal _amount)
+    {
+        string rp = _amount.ToString("N2");
+        return rp;
+    }
+    public int brRataOtpl(int vrstplac, int vrempermj)
+    {
+        int brRata = 0;
+        switch (brRata)
+        {
+            case 1:
+                brRata = vrempermj;
+                break;
+            case 2:
+                brRata = vrempermj / 3;
+                break;
+            default:
+                brRata = vrempermj;
+                break;
+        }
+        return brRata;
+    }
+
+
+
+
+
+}

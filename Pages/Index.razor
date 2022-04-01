@@ -1,0 +1,36 @@
+﻿@page "/"
+@inject IJSRuntime JS
+@using CrmExpert.Services
+@inject BrowserService Service
+
+    <p class="text-capitalize">Height:  @Height&nbsp;&nbsp;&nbsp;Width:   @Width</p>
+
+
+
+
+@code {
+
+
+    public int Height { get; set; }
+    public int Width { get; set; }
+    public string str { get; set; }
+
+
+
+
+    async Task GetDimensions()
+    {
+        var dimension = await Service.GetDimensions();
+        Height = dimension.Height;
+        Width = dimension.Width;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await GetDimensions();
+        StateHasChanged();
+    }
+
+}
+
+

@@ -1,0 +1,6 @@
+Web deployment task failed. (Could not connect to the remote computer ("server-03-z400"). On the remote computer, make sure that Web Deploy is installed and that the required process ("Web Management Service") is started.  Learn more at: https://go.microsoft.com/fwlink/?LinkId=221672#ERROR_DESTINATION_NOT_REACHABLE.)
+This error indicates that you cannot connect to the server. Make sure the service URL is correct, firewall and network settings on this computer and on the server computer are configured properly, and the appropriate services have been started on the server.
+Error details:
+Could not connect to the remote computer ("server-03-z400"). On the remote computer, make sure that Web Deploy is installed and that the required process ("Web Management Service") is started.  Learn more at: https://go.microsoft.com/fwlink/?LinkId=221672#ERROR_DESTINATION_NOT_REACHABLE.
+Unable to connect to the remote server
+A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond 192.168.5.205:8172

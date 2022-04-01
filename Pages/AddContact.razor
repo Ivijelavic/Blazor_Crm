@@ -1,0 +1,197 @@
+﻿@page "/AddContact/{IdKontakt}"
+@using Radzen.Blazor
+@using CrmExpert.Model
+@using CrmExpert.Data
+@inject NavigationManager NavigationManager
+@inject OpportunityService productservice
+
+
+
+    <div id="user" class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-md-offset-3">
+                <div class="card login-logout-tab">
+                    
+                    <div class="card">
+                        <h5 class="card-header">
+                            <i class="fas fa-user-lock"></i>&nbsp;&nbsp;&nbsp;Unos kontakta
+                        </h5>
+                        <section>
+                            <EditForm Model=@kontakt OnValidSubmit=@FormSubmitted>
+                                <DataAnnotationsValidator></DataAnnotationsValidator>
+                                <div class="form-group row form-control-lg">
+                                    <label class="col-sm-3 col-form-label" style="font-size:medium;">Ime: </label>
+                                    <div class="col-sm-9">
+                                        <div style="font-size:10px !important;">
+                                            <ValidationMessage For="(()=>kontakt.Ime )"></ValidationMessage>
+                                            <RadzenTextBox id="opis" Class="form-control" @bind-Value="@kontakt.Ime" TValue="string"
+                                                           Change="@(args => OnChange(args, "Ime"))" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row form-control-lg">
+                                    <label class="col-sm-3 col-form-label" style="font-size:medium;">Prezime: </label>
+                                    <div class="col-sm-9">
+                                        <div style="font-size:10px !important;">
+                                            <ValidationMessage For="(()=>kontakt.Prezime )"></ValidationMessage>
+                                            <RadzenTextBox id="opis" Class="form-control" @bind-Value="@kontakt.Prezime"
+                                                           Change="@(args => OnChange(args, "Prezime"))" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row form-control-lg">
+                                    <label class="col-sm-3 col-form-label" style="font-size:medium;">Adresa: </label>
+                                    <div class="col-sm-9">
+                                        <InputText id="opis" Class="form-control" @bind-Value="@kontakt.Adresa" />
+                                    </div>
+                                </div>
+                                <div class="form-group row form-control-lg">
+                                    <label class="col-sm-3 col-form-label" style="font-size:medium;">Sjedište: </label>
+                                    <div class="col-sm-9">
+                                        <InputText id="opis" Class="form-control" @bind-Value="@kontakt.Grad" />
+                                    </div>
+                                </div>
+                                <div class="form-group row form-control-lg">
+                                    <label class="col-sm-3 col-form-label" style="font-size:medium;">Poštanski broj: </label>
+                                    <div class="col-sm-9">
+                                        <InputText id="opis" Class="form-control" @bind-Value="@kontakt.PostanskiBroj" />
+                                    </div>
+                                </div>
+                                <div class="form-group row form-control-lg">
+                                    <label class="col-sm-3 col-form-label" style="font-size:medium;">Email: </label>
+                                    <div class="col-sm-9">
+                                        <InputText id="opis" Class="form-control" @bind-Value="@kontakt.EmailAdresa" />
+                                    </div>
+                                </div>
+                                <div class="form-group row form-control-lg" style="font-size:medium;">
+                                    <label class="col-sm-3 col-form-label">Telefon: </label>
+                                    <div class="col-sm-9">
+                                        <InputText id="opis" Class="form-control" @bind-Value="@kontakt.Telefon" />
+                                    </div>
+                                </div>
+                              
+                                <div class="form-group row form-control-lg" style="font-size:medium;">
+                                    <label class="col-sm-3 col-form-label">Komentar: </label>
+                                    <div class="col-sm-9">
+                                        <InputText id="opis" Class="form-control" @bind-Value="@kontakt.Komentar" />
+                                    </div>
+                                </div>
+
+
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <div class="card  border-0">
+                                            <div class="card-body">
+                                                <input type="submit" value="Dodaj u klijente" class="btn btn-secondary"  @onclick="@SetAsClient"/>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="card  border-0">
+                                            <div class="card-body">
+                                                <input type="submit" value="Submit" class="btn btn-primary" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </EditForm>
+                        </section>
+                        <div class="form-group">
+                            <div>
+                                <div class="input-group">
+                                    <div class="panel-body panel-default ml-4  @(Collapsed? "collapse": "")">
+
+
+                                        <div class=@poruka>
+                                            @Status
+                                        </div>
+
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br />
+    <br />
+
+    @code {
+
+        public bool Collapsed { get; set; } = true;
+        public string poruka = "alert alert-danger";
+
+
+        [Parameter]
+        public string IdKontakt { get; set; }
+
+
+        Kontakti kontakt;
+        string Status = "Upis Kontakta";
+
+        protected override void OnInitialized()
+        {
+            int id = Convert.ToInt32(IdKontakt);
+            if (id == 0)
+            {
+
+                kontakt = new Kontakti();
+
+            }
+            else if (id > 0)
+            {
+                kontakt = productservice.GetContactById(id);
+            }
+        }
+        async Task  FormSubmitted(EditContext editContext)
+        {
+            Status = "Form submitted";
+            bool validated = editContext.Validate();
+            int i = productservice.InsContact(kontakt);
+            if (i == 1)
+            {
+                //NavigationManager.NavigateTo("/DataManager");
+                Status = "Prilika je uspješno pospremljena.";
+                Collapsed = false;
+                poruka = "alert alert-success";
+                await Task.Delay(7000);
+                Collapsed = true;
+
+
+            }
+            else
+            {
+                Status = "Došlo je do greške prilikom spremanja prilike";
+                Collapsed = false;
+                poruka = "alert alert-danger";
+                await Task.Delay(7000);
+                Collapsed = true;
+            }
+        }
+
+
+
+        private string KontaktId = "";
+        public string url = "AddClient";
+        void SetAsClient()
+        {
+            Collapsed = true;
+            if (kontakt.id > 0)
+            {
+                Collapsed = true;
+                Status = "";
+                poruka = "";
+                KontaktId = kontakt.id.ToString();
+
+                NavigationManager.NavigateTo(url + "/0/" + KontaktId);
+                Collapsed = true;
+                poruka = "";
+            }
+            Collapsed = true;
+        }
+
+    }

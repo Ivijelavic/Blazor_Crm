@@ -1,0 +1,90 @@
+﻿@page "/Kaskada"
+
+<EditForm Model="timeLogs">
+    <div class="row">
+        <div class="col-md-4 align-items-center d-flex">
+            <RadzenLabel Style="margin:0px" Text="Payroll Job Radzen Dropdown" />
+        </div>
+        <div class="col-md-6">
+            <RadzenDropDown AllowFiltering="true" Placeholder="Select..." FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Data="@payrollJob" @bind-Value="timeLog.PayrollJob"
+                            Style="width:100%;font-size:small" Change="@(args => ChangeBound(args, "PayrollJob"))" />
+        </div>
+    </div>
+    <div class="col-md-4 align-items-center d-flex">
+        <RadzenLabel Style="margin:0px" Text="Phase Radzen Dropdown" />
+    </div>
+    <div class="col-md-6">
+        <RadzenDropDown AllowFiltering="true" Placeholder="Select..." FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Data="@phase" @bind-Value="timeLog.Phase"
+                        Style="width:100%;font-size:small" Change="@(args => ChangeBound(args, "Phase"))" />
+    </div>
+    <div class="row">
+        <div class="col-md-4 align-items-center d-flex">
+            <RadzenLabel Style="margin:0px" Text="Phase HTML select" />
+        </div>
+        @if (phase != null)
+        {
+            <select class="drpdwn" id="phase">
+                <option></option>
+                @foreach (var p in phase)
+                {
+                    <option value="@p">@p</option>
+                }
+            </select>
+        }
+    </div>
+</EditForm>
+
+@code {
+    public List<string> payrollJob = new List<string>() { "Example1", "Example2", "Example3" };
+    public List<string> phase = new List<string>();
+    List<TimeLog> timeLogs = new List<TimeLog>();
+    TimeLog timeLog = new TimeLog();
+
+    async Task ChangeBound(object value, string name)
+    {
+        phase.Clear();
+
+        switch (name)
+        {
+            case "PayrollJob":
+                if (value != null)
+                {
+                    timeLog.PayrollJob = value.ToString();
+                    await GetPhase(timeLog.PayrollJob, timeLog.PayrollJob);
+                }
+                else
+                {
+                    timeLog.PayrollJob = null;
+                }
+                break;
+        }
+    }
+
+    public async Task GetPhase(object value, string name)
+    {
+        switch (name)
+        {
+            case "Example1":
+                if (value != null) phase.AddRange(new List<string> { "one", "two", "three" });
+
+                break;
+            case "Example2":
+                if (value != null) phase.AddRange(new List<string> { "four", "five", "six" });
+
+                break;
+            case "Example3":
+                if (value != null) phase.AddRange(new List<string> { "seven", "eight", "nine" });
+
+                break;
+        }
+        phase = phase.ToList();
+        StateHasChanged();
+    }
+
+
+    public class TimeLog
+    {
+        public string PayrollJob { get; set; }
+        public string Phase { get; set; }
+    }
+}

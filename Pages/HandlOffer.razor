@@ -1,0 +1,319 @@
+﻿@page "/HandlOffer/{OfferId}/{PonudaIdstr}/{sifraTmpl}"
+@using System.Text.RegularExpressions;
+@using Radzen
+@using CrmExpert.Model
+@using CrmExpert.Data
+@using Radzen.Blazor
+@using System.Net
+@using System.Net.Mail
+@using FluentEmail.Core;
+@using FluentEmail.Smtp;
+@using Microsoft.AspNetCore.Mvc;
+@using System.IO;
+@inject OpportunityService productservice
+@inject SelectedPonudaDobavljac AppData
+@inject NavigationManager NavigationManager
+@inject IJSRuntime jsRuntime
+
+
+
+    
+
+
+
+<div class="container">
+
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-md-offset-3">
+            <div class="card login-logout-tab">
+                <div class="card">
+                    <h5 class="card-header">
+                        <i class="fas fa-envelope" style="font-size:30px"></i>&nbsp;Email Dispatcher&nbsp;&nbsp;&nbsp;<NavLink href=@("AddClient/" + Id_Klijenta + "/0/")><font style="font-family:Arial;"><i class="fas fa-info-circle"></i></font>@ImeTvrtke</NavLink>
+                    </h5>
+
+
+                    <div class="input-group input-group-sm mb-3">
+                        <div class="form-control form-control-lg alert-secondary border-3 font-weight-bolder col-md-9">
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Broj zahtjeva:&nbsp;&nbsp;@OfferId
+                        </div>
+                        <div class="form-control alert-secondary border-3 font-weight-bolder col-md-9">
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Broj ponude:&nbsp;&nbsp;@PonudaIdstr
+                        </div>
+                    </div>
+
+
+
+                    <div class="form-group row form-control-lg mt-0">
+                        <label class="col-sm-3 col-form-label" style="font-size: small;"> Document templates:</label>
+                        <div class="col-sm-9">
+                            <div style="font-size:10px !important;">
+                                <div class="p-2 bd-highlight">
+                                    <RadzenDropDown AllowClear="true" TValue="int" AllowVirtualization="true" Placeholder="Odaberite html Template"
+                                                    AllowFiltering="false" Data=@htmlTemplates TextProperty="TemplateName" ValueProperty="id"
+                                                    @bind-Value=@Ponuda.idHtmltemplate
+                                                    Change=@(args => OnAddTmpl(args,"htmltemplate")) Class="w-100" />
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+
+                    <div class="form-group row form-control-lg mt-0">
+                        <label class="col-sm-3 col-form-label" style="font-size: small;"> Opis opreme:</label>
+                        <div class="col-sm-9">
+                            <div style="font-size:10px !important;">
+                                <RadzenDropDown AllowClear="true" @bind-Value=@IdKontaktls AllowVirtualization="false"
+                                                Placeholder="Send to:" Multiple="true"
+                                                AllowFiltering="false" Data=@kontaktiKlijenta
+                                                TextProperty="EmailAdresa" ValueProperty="EmailAdresa"
+                                                Change=@(args => OnAddEmail(args,"kontakti")) Class="w-100" />
+
+                            </div>
+                        </div>
+
+                    </div>
+
+
+
+
+                    @if (ListaKontakata != null)
+                    {
+                        int i = 0;
+
+
+                        <div class="card">
+                            <div class="card-body">
+                                Kontakti:
+                                <table>
+                                    @foreach (string item in ListaKontakata)
+                                    {
+                                        i++;
+                                        <tr>
+                                            <td>@i.</td>
+                                            <td style="font-size:small;"><button style="border:none;background-color:white;" @onclick="@(args =>TestPost(item))">@item</button></td>
+                                        </tr>
+
+                                    }
+                                </table>
+
+                            </div>
+
+                        </div>
+
+
+                    }
+
+                </div>
+
+                <table>
+                    <tr>
+                        @if (ishtmlTempl == true)
+                        {
+                            <td class="p-2 bd-highlight"><a class="btn btn-primary" href=@guid target="blank">Preview Web Page&nbsp;&nbsp;<i class="fas fa-file-alt fa-2x"></i></a></td>
+                        }
+                        @if (ishtmlTemplSend == true)
+                        {
+                            <td class="p-2 bd-highlight"><button class="btn btn-primary" type="submit" @onclick="@SendMails">Send emails&nbsp;&nbsp;<i class="fas fa-paper-plane fa-2x"></i></button></td>
+                        }
+                    </tr>
+                </table>
+            </div>
+
+
+
+            @if (emails?.Any() ?? false)
+            {    int j = 0;
+                <div class="card">
+                    <div class="card-body">
+                        Poslane poruke:
+                        <table class="table table-condensed table-bordered table-striped ">
+                            <tr>
+                                <th>
+                                    Rbr.
+                                </th>
+                                <th>
+                                    Kontakt
+                                </th>
+                                <th>
+                                    Email
+                                </th>
+                                <th>
+                                    Datum
+                                </th>
+                            </tr>
+                            @foreach (Messages Note in emails)
+                            {
+                            
+                                j++;
+                        <tr>
+                            <td>@j.</td>
+                            <td style="font-size:small;">
+                                @Note.ImePrezime
+                            </td>
+                            <td style="font-size:small;">
+                                @Note.Receivers
+                            </td>
+                            <td style="font-size:small;">
+                                @Note.DateTimeOfCreation.ToUniversalTime().ToString("ddd, d MMM yyyy, HH:mm:ss")
+                            </td>
+                        </tr>
+                                    }
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                }
+
+         </div>
+    </div>
+</div>
+
+
+
+    @code {
+
+        public void TestPost(object value)
+        {
+
+            ListaKontakata.Remove(value.ToString());
+        }
+
+
+        object IdKontaktls;
+
+
+
+        [Parameter]
+        public string OfferId { get; set; }
+        [Parameter]
+        public string PonudaIdstr { get; set; }
+        [Parameter]
+        public string sifraTmpl { get; set; }
+        /***************************************************************/
+        List<HtmlTemplate> htmlTemplates;
+        /******************************************************************/
+        public string PrikazOstatka { get; set; }
+        public bool ishtmlTempl { get; set; } = false;
+        public bool ishtmlTemplSend { get; set; } = false;
+        /**************************************************************************/
+
+        public string stlcshsaldo { get; set; }
+        public string stlcshsaldoIznos { get; set; }
+        public string stlprofitfromnet { get; set; }
+        public string stlprofitfromnetnum { get; set; }
+
+        /****************************************************************************/
+        public string guid { get; set; }
+        List<KontaktiView> kontaktiKlijenta;
+        public List<string> ListaKontakata { get; set; }
+
+        Prilike prilika;
+        PonudePrilika Ponuda;
+        Klijenti klijent;
+        public string Id_Klijenta { get; set; }
+        public string ImeTvrtke { get; set; }
+
+        List<Messages> emails { get; set; }
+
+
+        protected async override void OnInitialized()
+        {
+            int id = Convert.ToInt32(OfferId);
+            int idpon = Convert.ToInt32(PonudaIdstr);
+
+            prilika = productservice.getOppObjById(id);
+            Id_Klijenta = prilika.Id_Klijenta.ToString();
+            kontaktiKlijenta = productservice.GetContactsViewById(prilika.Id_Klijenta);
+            klijent = productservice.getClientById(prilika.Id_Klijenta);
+            ImeTvrtke = klijent.ImeTvrtke;
+
+            Ponuda = await productservice.getOffbyId(idpon);
+            guid = "http://192.168.5.205:8081/" + Ponuda.Uid_Dokument.ToString();
+            emails = await productservice.GetSendMails(Ponuda.Uid_Dokument);
+            htmlTemplates = await productservice.HtmlTemplateList(Convert.ToInt32(sifraTmpl));
+            if (Ponuda.idHtmltemplate > 0) ishtmlTempl = true;
+            ListaKontakata = new();
+        }
+
+        public void SendMails()
+        {
+            try
+            {
+                foreach (string email in ListaKontakata)
+                {
+
+                    string[] tokens = email.Split(new char[] { ';' }, 2, 0);
+                    Guid g = Guid.Parse(Ponuda.Uid_Dokument.ToString());
+
+                    Messages msg = new Messages();
+                    msg.Uid_Dokument = g;
+                    msg.id_Document = 1;
+                    msg.DateTimeOfCreation = DateTime.Now;
+                    msg.DateTimeOfUpdate = DateTime.Now;
+                    msg.NumberOfFailures = 0;
+                    msg.Sender = "User";
+                    msg.MessageEventType_Id = 0;
+                    msg.MessageStatus_Id = 0;
+                    msg.MessageType_Id = 0;
+                    msg.Receivers = tokens[1].ToString(); ;
+                    msg.Subject = "Ponuda";
+                    msg.ImePrezime = tokens[0].ToString();
+                    int ins= productservice.InsMessages(msg);
+                    if(ins == 0) {
+                        ListaKontakata.Clear();
+                        ishtmlTemplSend = false;
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                //log ex
+            }
+        }
+
+        void OnAddEmail(object value, string name)
+        {
+            if (ListaKontakata != null)
+            {
+                ListaKontakata.Clear();
+            }
+            else
+            {
+                ListaKontakata = new();
+            }
+            if (value != null)
+            {
+                List<string> collection = new List<string>((IEnumerable<string>)value);
+                if (collection.Count > 0)
+                {
+                    ishtmlTemplSend = true;
+                    foreach (string email in collection)
+                    {
+                        ListaKontakata.Add(email);
+                    }
+                }
+            }
+        }
+
+
+        void OnAddTmpl(object value, string name)
+        {
+            int idpon = Convert.ToInt32(PonudaIdstr);
+            if (idpon > 0) ishtmlTempl = true;
+            productservice.UpdtHtmlTemplate(idpon, (int)value);
+
+
+        }
+
+
+
+
+
+
+
+    }
