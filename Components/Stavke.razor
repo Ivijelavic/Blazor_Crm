@@ -1,0 +1,235 @@
+﻿@using Radzen.Blazor
+@using CrmExpert.Data
+@using CrmExpert.Model
+@inject NavigationManager NavigationManager
+@inject OpportunityService productservice
+
+
+    @inject IJSRuntime JSRuntime;
+
+
+
+
+    @if (TenderId != "0")
+    {
+
+        @if (stavke == null)
+        {
+            <p>Loading..stavke.</p>
+        }
+        else
+        {
+            <div id="user" class="container-fluid">
+                <div class="row justify-content-center">
+                    <div class="col-md-6">
+                        <div class="card login-logout-tab">
+
+                            <RadzenButton Icon="add_circle_outline" Style=" width: 50px;margin:17px 17px 17px 17px;" Click="@InsertRow" Visible=@showadd />
+                            <RadzenDataGrid @ref="stavkeGrid" AllowFiltering="false" AllowPaging="false" AllowSorting="false" EditMode="DataGridEditMode.Single"
+                                            Data="@stavke" TItem="Stavka" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow">
+                                <Columns>
+
+                                    <RadzenDataGridColumn Width="30px" TItem="Stavka" Property="Stavka.Naziv" Title="Naziv">
+                                        <EditTemplate Context="stavke">
+                                            <RadzenDropDown @bind-Value="stavke.Naziv" Data="@artikli" TextProperty="Artikl" Style="width:100%;font-size:small;"
+                                                            Change="@(args => ChangeBound(args, "VrstaArtikla"))" />
+                                        </EditTemplate>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn Width="30px" TItem="Stavka" Property="Stavka.Brand" Title="Brand">
+                                        <EditTemplate Context="stavke">
+                                            <RadzenDropDown Data="@selectedbrands" TextProperty="Vendor" ValueProperty="Vendor" TValue="string" Style="width:100%;font-size:small;"
+                                                            @bind-Value="stavke.Brand" Change="@(args => ChangeBound(args, "Vendor"))" />
+                                        </EditTemplate>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn Width="30px" TItem="Stavka" Property="Stavka.Amount" Title="Cijena">
+                                        <EditTemplate Context="stavka">
+                                            <RadzenNumeric TValue="decimal" Min="0" Max=@Ostatak Style="width:100%;font-size:small;"
+                                                           @onkeydown="@Enter" Name="Payment" @bind-Value=@Ostatak Format="N2" Step="0"
+                                                           @oninput="@FilterChangedAsync">
+
+                                            </RadzenNumeric>
+                                        </EditTemplate>
+                                    </RadzenDataGridColumn>
+
+                                    <RadzenDataGridColumn Width="20px" TItem="Stavka" Property="Stavka.Percentage" Title="%" Visible=@showartikl>
+                                        <EditTemplate Context="stavka">
+                                            <RadzenNumeric TValue="decimal" Format="0.00" Min=0 Max=100 Style="width:100%;font-size:small;"
+                                                           @onkeydown="@Enter" Name="Payment" @bind-Value=@persentage Disabled="@true" />
+
+                                        </EditTemplate>
+                                    </RadzenDataGridColumn>
+
+                                    <RadzenDataGridColumn TItem="Stavka" Context="order" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="10px" Visible=@showartikl>
+                                        <Template Context="stavka">
+                                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="close" Size="ButtonSize.Small" Click="@(args => DeleteRow(stavka))" @onclick:stopPropagation="true">
+                                            </RadzenButton>
+                                        </Template>
+                                        <EditTemplate Context="stavka">
+                                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="close" Size="ButtonSize.Small" Click="@(args => DeleteRow(stavka))">
+                                            </RadzenButton>
+                                        </EditTemplate>
+                                    </RadzenDataGridColumn>
+
+                                </Columns>
+                            </RadzenDataGrid>
+                            <RadzenButton Icon="save" style="float:right; width: 50px;margin:17px 17px 17px 17px;" Click="@SaveAset" Visible=@showsave />
+                            <div class="@($"{@mystyle}")">@Status</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        }
+
+    }
+
+
+    @code {
+        string Status;
+        string mystyle = "invisible";
+        public RadzenDataGrid<Stavka> stavkeGrid;
+        List<Stavka> stavkel = new();
+
+
+        IEnumerable<Stavka> employees;
+        RadzenDataGrid<Stavka> stavkaGrid;
+
+        bool showadd = true;
+        bool showsave = false;
+        List<string> artikli = new();
+        List<string> selectedbrands;
+
+        double Amount { get; set; } = 100.00d;
+
+        public decimal persentage { get; set; } = 100.00m;
+
+
+        void CancelEdit(Stavka stavka)
+        {
+            stavkeGrid.CancelEditRow(stavka);
+            isEdit = false;
+        }
+
+        public void GetBrends(object value, string name)
+        {
+            selectedbrands = new();
+            //  selectedbrands.Clear();
+            selectedbrands = productservice.GetBrandsList(value.ToString()).ToList();
+            //StateHasChanged();
+        }
+
+        public void Enter(KeyboardEventArgs e)
+        {
+            if (e.Key == "Enter" || e.Key == "Tab")
+            {
+
+
+                SaveRow(stvEdit);
+
+            }
+        }
+
+        void SaveRow(Stavka stavka)
+        {
+            stvEdit.idStavka = stavkel.Count + 1;
+
+            stvEdit.TenderId = Convert.ToInt32(TenderId);
+
+            stavkeGrid.UpdateRow(stavka);
+            stavkel.Add(stavka);
+            stavke.Add(stavka);
+            decimal SumPersentage = (from x in stavkel select x.Percentage).Sum();
+            if (SumPersentage == 100.00m)
+            {
+                showadd = false;
+                isEdit = true;
+                showsave = true;
+            }
+            else
+            {
+                showadd = true;
+                isEdit = false;
+                showsave = false;
+            }
+
+
+        }
+
+        void OnChange(object value, string name)
+        {
+
+        }
+
+        private void FilterChangedAsync(ChangeEventArgs args)
+        {
+            try
+            {
+                if (args.Value.ToString() == "") return;
+                decimal val = Convert.ToDecimal(args.Value);
+                if (val < Ostatak)
+                {
+                    decimal value = (val / UkupnaCijena) * 100;
+
+
+                    stvEdit.Percentage = persentage = Math.Round(value, 2, MidpointRounding.AwayFromZero);
+                    stvEdit.Amount = val;
+                    // Ostatak = UkupnaCijena - (stvEdit.Amount + Ostatak);
+
+                }
+            }
+            catch (Exception)
+            {
+
+                // throw;
+            }
+
+
+        }
+
+
+
+        void DeleteRow(Stavka stavka)
+        {
+            if (stavke.Contains(stavka))
+            {
+
+                // Ostatak = Ostatak + stavka.Amount;
+                // persentage = persentage + stavka.Percentage;
+                stavke.Remove(stavka);
+                stavkel.Remove(stavka);
+                stavkeGrid.Reload();
+                decimal SumPersentage = (from x in stavkel select x.Percentage).Sum();
+                if (SumPersentage <= 100.00m)
+                {
+                    showadd = true;
+                    isEdit = false;
+                    showsave = false;
+                }
+            }
+            else
+            {
+                stavkeGrid.Reload();
+                isEdit = false;
+                showsave = false;
+            }
+        }
+        // SaveAset
+        void SaveAset()
+        {
+            try
+            {
+                int idPonuda = Convert.ToInt32(TenderId);
+                int insok = productservice.InsAsset(stavkel, idPonuda);
+                if (insok > 0)
+                {
+                    showsave = showartikl = false;
+                }
+
+            }
+            catch (Exception ex)
+            {
+
+                // log ex;
+            }
+        }
+    }

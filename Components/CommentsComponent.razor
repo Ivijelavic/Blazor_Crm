@@ -1,0 +1,180 @@
+﻿@page "/CommentsComponent/{OpportunityId}"
+@using Radzen.Blazor
+@using CrmExpert.Model
+@using CrmExpert.Data
+@inject NavigationManager NavigationManager
+@inject OpportunityService productservice
+
+
+<div class="container">
+    <div class="row mt-3 ml-2">
+        <RadzenDropDown TValue="Komentar" AllowClear="true" Style="width:67%;"
+                        Placeholder="Odaberi vrstu komentara..." Data=@poruke TextProperty="Name" ValueProperty="Id"
+                        Change=@(args => OnChange(args, "msg"))>
+            <Template>
+                @{
+                    var culture = context as Komentar;
+                }
+
+                <span class=@culture.Icon></span>
+                @culture.Naziv
+
+
+            </Template>
+        </RadzenDropDown>
+
+        &nbsp;&nbsp; &nbsp;&nbsp;  <button Style="width:27%;" class="btn btn-primary" type="submit" @onclick="@AddMessageer" disabled=@zatvori>Dodaj</button>
+    </div>
+
+
+
+
+    
+
+
+
+
+        <div class="panel panel-default border @(Collapsed? "collapse": "" ) ">
+
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">
+
+                        @if (@eventsakrij == "visibility:none")
+                                {
+                        <RadzenDatePicker TValue="DateTime?" ShowTime="true" ShowSeconds="true" HoursStep="1.5" MinutesStep="5"
+                                          Visible=@calendar SecondsStep="10" DateFormat="dd.MM.yyyy HH:mm" Style="width:35px;height:35px;"
+                                          Change=@(args => OnChange(args, "DateOffer", "dd.MM.yyyy hh:mm"))>
+
+
+                        </RadzenDatePicker>
+                                }
+                                else
+                                {
+                        <i class=@Znak></i>
+                                }
+
+                    </span>
+                </div>
+
+                <textarea class="form-control z-depth-1"
+                          id="Comment" maxlength="250"
+                          @bind="NewComment" @bind:event="onchange" @oninput="@(args =>OnInput(args.Value.ToString()))"
+                          rows="3" placeholder="Upišite poruku..." @onkeydown="@Enter"></textarea>
+            </div>
+     
+
+
+    </div>
+
+    <div class="row">
+
+        <NoteViewComponent OpportunityId="@OpportunityId" @ref="ChildComponent"></NoteViewComponent>
+
+
+
+        @foreach (var item in komentari)
+    {
+        @item.CreateBY
+        <br />
+        @item.CreateDate
+
+    }
+    </div>
+</div>
+    @code {
+
+        protected NoteViewComponent ChildComponent;
+        public bool zatvori = true;
+
+
+        public bool Collapsed { get; set; } = true;
+        public DateTime EventTP;
+        [Parameter]
+        public string OpportunityId { get; set; }
+
+        List<Prilika_Komentari> komentari = new();
+
+        public IList<Note> Notes { get; set; }
+        public string NewComment { get; set; }
+        public string Icon { get; set; }
+        public string Znak;
+        bool checkBox1Value;
+        public string sakrij = "visibility:hidden";
+        public string eventsakrij = "visibility:hidden";
+        public bool calendar = false;
+        // public Message myClass { get; set; }
+
+        protected override void OnInitialized()
+        {
+            fillCombo();
+        }
+
+        public string getKlijent()
+        {
+            //Prilike pr = productservice.getOppObjById(Convert.ToInt32(OpportunityId));
+            Klijenti klijent = productservice.getKlijentById(Convert.ToInt32(OpportunityId));
+            String strklijent = klijent.ImeTvrtke + "/" + klijent.Adresa;
+            return strklijent;
+        }
+
+
+        public void Enter(KeyboardEventArgs e)
+        {
+            if (e.Code == "Enter" || e.Code == "NumpadEnter")
+            {
+                sakrij = "visibility:hidden";
+                int ins = 0;
+                NoviKomentar.Komentar = NewComment;
+                if (NoviKomentar.Komentar.Length > 5)
+                {
+                    ins = insertKomentar(NoviKomentar);
+                }
+                if (ins == 1)
+                {
+
+                    InsEvent(getKlijent());
+                    ChildComponent.Refresh();
+                }
+                NewComment = string.Empty;
+                NewComment = "";
+                Collapsed = true;
+            }
+        }
+
+        void OnInput(string value)
+        {
+            NewComment = value;
+        }
+
+
+        public void AddMessageer()
+        {
+            try
+            {
+                sakrij = "visibility:hidden";
+                int ins = 0;
+                NoviKomentar.Komentar = NewComment;
+                if (NoviKomentar.Komentar.Length > 5)
+                {
+                    ins = insertKomentar(NoviKomentar);
+                }
+                if (ins == 1)
+                {
+                    InsEvent(getKlijent());
+                    ChildComponent.Refresh();
+                }
+                NewComment = string.Empty;
+                NewComment = "";
+                Collapsed = true;
+            }
+            catch (Exception ex)
+            {
+
+                // throw;
+            }
+        }
+
+    }
+
+

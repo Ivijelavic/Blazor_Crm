@@ -1,0 +1,77 @@
+﻿@using Radzen.Blazor
+@using CrmExpert.Data
+@using CrmExpert.Model
+@inject NavigationManager NavigationManager
+
+@inject OpportunityService productservice
+
+
+
+@if (prilike == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="d-flex p-2 bd-highlight">
+        <NavLink class="oi oi-plus" href="EditOpportunityComponent/0"><font style="font-family:Arial;">...Novi zahtjev</font></NavLink>
+    </div>
+ 
+        <RadzenGrid AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowPaging="true" PageSize="15"
+                    AllowSorting="true" Data="@prilike" TItem="ResultViewOpportunity"  ColumnWidth="100px" Responsive="false"
+                    RowSelect=@RowSelect>
+            <Columns>
+                <RadzenGridColumn TItem="ResultViewOpportunity" Property="Vrsta_Prilika_Naziv" Title="Vrsta">
+                    <Template Context="logs">
+                        @if (logs.Vrsta_Prilika_Naziv == "Leasing")
+                        {
+                            <span style="color:black;font-size:15px;"><i class="fas fa-box-open"></i>&nbsp;&nbsp;@logs.Vrsta_Prilika_Naziv </span>
+                        }
+                        @if (logs.Vrsta_Prilika_Naziv == "Prodaja")
+                        {
+                            <span style="color:brown;font-size:15px;"><i class="fas fa-hand-holding-usd"></i>&nbsp;&nbsp;@logs.Vrsta_Prilika_Naziv</span>
+                        }
+                        @if (logs.Vrsta_Prilika_Naziv == "Najam")
+                        {
+                            <span style="color:green;font-size:15px;"><i class="fas fa-dolly"></i>&nbsp;&nbsp;@logs.Vrsta_Prilika_Naziv</span>
+                        }
+                    </Template>
+                </RadzenGridColumn>
+                <RadzenGridColumn TItem="ResultViewOpportunity" Property="ImeKlijenta" Title="Klijent" > </RadzenGridColumn>
+                <RadzenGridColumn TItem="ResultViewOpportunity" Property="idPrilike" Title="Id"> </RadzenGridColumn>
+                <RadzenGridColumn TItem="ResultViewOpportunity" Property="Vrijednost_objekta" Title="Vrijednost">
+                    <Template Context="data">
+                        @String.Format("{0:N2}", data.Vrijednost_objekta)
+                    </Template>
+                </RadzenGridColumn>
+                <RadzenGridColumn TItem="ResultViewOpportunity" Property="OpisObjLeas" Title="Opis"> </RadzenGridColumn>
+                <RadzenGridColumn TItem="ResultViewOpportunity" Property="CreateDate" Title="Datum kreiranja">
+                    <Template Context="data">
+                        @String.Format("{0:dd.MM.yy}", data.CreateDate)
+                    </Template>
+                </RadzenGridColumn>
+                <RadzenGridColumn TItem="ResultViewOpportunity" Property="Status" Title="Status"> </RadzenGridColumn>
+            </Columns>
+        </RadzenGrid>
+  
+        }
+
+
+
+
+        @code {
+            IEnumerable<ResultViewOpportunity> prilike;
+    protected override async Task OnInitializedAsync()
+        {
+            prilike = await Task.Run(() => productservice.OpportunityList());
+        }
+
+        private string OpportunityId = "";
+        public string url = "OppDetail";
+        void RowSelect(ResultViewOpportunity opportunity)
+        {
+            OpportunityId = opportunity.idPrilike.ToString();
+
+            NavigationManager.NavigateTo(url + "/" + OpportunityId);
+        }
+        }

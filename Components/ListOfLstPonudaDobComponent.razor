@@ -1,0 +1,217 @@
+﻿@using Radzen.Blazor
+@using CrmExpert.Data
+@using CrmExpert.Model
+@inject NavigationManager NavigationManager
+@inject OpportunityService productservice
+@inject CrmExpert.Model.SelectedPonudaDobavljac AppData
+
+
+@if (dobavljaci == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="d-flex p-2 bd-highlight">
+        <NavLink class="oi oi-plus" href=@link><font style="font-family:Arial;">...Nova ponuda dobavljača</font></NavLink>&nbsp;&nbsp;
+        <a hidden="@IsShow" class="oi oi-plus" href="" @onclick=@Navigate><font style="font-family:Arial;">...Nova ponuda klijentu</font></a>
+    </div>
+    <RadzenDataGrid AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowPaging="true" PageSize="6" SelectionMode="DataGridSelectionMode.Single"
+                    AllowSorting="true" Data="@dobavljaci" TItem="ListaPonudaDobavljaciView" ColumnWidth="100px" @bind-Value=@selectedDobavljaci RowSelect="Rowselect">
+        <Columns>
+            <RadzenDataGridColumn TItem="ListaPonudaDobavljaciView" Width="50px" Sortable="false" Filterable="false">
+                <HeaderTemplate>
+                    <RadzenCheckBox TriState="false" TValue="bool" Value="@(dobavljaci.Any(i => selectedDobavljaci != null && selectedDobavljaci.Contains(i)))"
+                                    Change="@(args => selectedDobavljaci = args ? dobavljaci.ToList() : null)" Disabled="true" />
+                </HeaderTemplate>
+                <Template Context="data">
+                    <RadzenCheckBox @key=@data TValue="bool" Style="border:groove" Name="" Change=@(args => AddFileToList(args, data)) />
+                </Template>
+            </RadzenDataGridColumn>
+
+            <RadzenDataGridColumn TItem="ListaPonudaDobavljaciView" Property="ImeDobavljaca" Title="Edit" Width="50px">
+                <Template Context="ListaPonudaDobavljaciView">
+                    <RadzenButton Icon="edit" Size="ButtonSize.Small" Click="@(args => EditRow(ListaPonudaDobavljaciView))" @onclick:stopPropagation="true" />
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="ListaPonudaDobavljaciView" Property="ImeDobavljaca" Title="Naziv"> </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="ListaPonudaDobavljaciView" Property="VrijednostPondeVal" Title="Vrijednost"> </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="ListaPonudaDobavljaciView" Property="OpisPonude" Title="Opis"> </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="ListaPonudaDobavljaciView" Property="CreateDate" Title="Datum kreiranja">
+                <Template Context="data">
+                    @String.Format("{0:dd.MM.yy}", data.CreateDate)
+                </Template>
+
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="ListaPonudaDobavljaciView" Property="OznakaValute" Title="Valut"> </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+
+
+
+
+    @if (selectedDobavljaci?.Any() == true)
+    {
+        int br = 0;
+        string strUrlPdf = string.Empty;
+        <p class="h6 mt-2">
+            <RadzenButton Click="@(args => ClearSelection(args))" Text="Sakrij ponudu" Size="ButtonSize.Small" Disabled="@removeBtn" />
+
+
+
+
+            Onemogući ponudu  dobavljača @selectedDobavljaci[0].ImeDobavljaca
+            br.    @selectedDobavljaci[0].id.ToString()!@porukazabrisanje
+        </p>
+
+        
+
+            @if (dokumenti.Count > 0)
+            {
+            <div class="container">
+
+                @foreach (var item in dokumenti)
+                {
+                    strUrlPdf = "./uploads/" + item.Id_Zahtjeva + "_" + item.Id_PonudeDobavljaca +"/"+ item.Naziv;
+                    br = br + 1;
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <a href=@strUrlPdf target="blank">
+                                <b>@br.</b>&nbsp;&nbsp;
+                                @item.Naziv&nbsp;&nbsp;&nbsp;&nbsp;
+
+                                @item.CreateBy&nbsp;&nbsp;&nbsp;&nbsp;
+
+                                @item.CreateDate&nbsp;&nbsp;&nbsp;&nbsp;
+                                </a>
+</div>
+                    </div>
+                }
+            </div>
+            }
+
+     }
+
+}
+
+
+
+
+            @code {
+                string idTrash;
+                bool removeBtn = true;
+                string porukazabrisanje = "";
+                List<Ponude_Dobavljaci_Documents> dokumenti;
+                async Task ClearSelection(object value)
+                {
+                    idTrash = selectedDobavljaci[0].id.ToString();
+                    int idPonuda = Convert.ToInt32(idTrash);
+                    bool isskinut = await productservice.UpdatePonudaDobavljacById(idPonuda);
+                    removeBtn = true;
+                    porukazabrisanje = "Ponuda onemogućena.";
+                }
+
+                public async void Rowselect(object value)
+                {
+                    porukazabrisanje = "";
+                    removeBtn = false;
+                    ListaPonudaDobavljaciView viewPD = (ListaPonudaDobavljaciView)value;
+                    dokumenti = await productservice.GetDokDobavljaci(viewPD.id, viewPD.Id_Prilike);
+
+                }
+
+                public async  void SomeMethod(Guid str)
+                {
+                  //  await JSRuntime.InvokeAsync<object>("open", str, "_blank");
+                }
+
+                [Parameter]
+                public string OpportunityId { get; set; }
+                [Parameter]
+                public string ClientId { get; set; }
+
+                public string link;
+
+                IEnumerable<ListaPonudaDobavljaciView> dobavljaci;
+                IList<ListaPonudaDobavljaciView> selectedDobavljaci;
+                protected override async Task OnInitializedAsync()
+                {
+                    AppData.ClearProduct();
+                    int id = Convert.ToInt32(OpportunityId);
+                    if (id > 0)
+                    {
+                        dobavljaci = await Task.Run(() => productservice.PrilikaDobavljaciList(id));
+                    }
+                    link = "NovaPonudaDobvljacaComponent/0/" + id;
+                    //link = "NewOfferSuplier/0";
+                    Show();
+                }
+
+
+
+
+                void RowSelect1(object value, object name)
+                {
+                    // OpportunityId = opportunity.idPrilike.ToString();
+
+                    // NavigationManager.NavigateTo(url + "/" + dobavljac.id);
+                }
+
+
+                void AddFileToList(object value, object name)
+                {
+                    bool isSelect = false;
+                    ListaPonudaDobavljaciView ponuda = (ListaPonudaDobavljaciView)name;
+                    var a = productservice.GetStavkePonudaDobavljaca(ponuda.id);
+                    if (a.Result.Count == 0)
+                    {
+                        NavigationManager.NavigateTo(url + "/" + ponuda.id + "/" + Convert.ToInt32(OpportunityId));
+                    }
+                    if (value is bool)
+                    {
+                        isSelect = (bool)value;
+
+                    }
+                    if (isSelect)
+                    {
+                        AppData.AddProduct(ponuda);
+                    }
+                    else
+                    {
+                        AppData.RemoveProduct(ponuda);
+                    }
+                    Show();
+                }
+
+
+
+
+                public string url = "NovaPonudaDobvljacaComponent";
+                void EditRow(ListaPonudaDobavljaciView dobavljac)
+                {
+                    NavigationManager.NavigateTo(url + "/" + dobavljac.id + "/" + Convert.ToInt32(OpportunityId));
+                }
+
+                private void Navigate()
+                {
+                    NavigationManager.NavigateTo("offer/" + Convert.ToInt32(OpportunityId) + "/0/new");
+                }
+
+
+
+                private bool IsShow { get; set; } = false;
+                private void Show()
+                {
+
+                    if (AppData.SelectedGridDobavljaci.Count > 0)
+                    {
+                        IsShow = false;
+                    }
+                    else
+                    {
+                        IsShow = true;
+                    }
+                }
+
+            }
+

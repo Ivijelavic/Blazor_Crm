@@ -1,0 +1,342 @@
+﻿@page "/ScoringComponent/{OpportunityId}"
+@using Radzen.Blazor
+@using CrmExpert.Model
+@using CrmExpert.Data
+@inject IJSRuntime JS
+@using CrmExpert.Services
+@inject BrowserService Service
+@inject NavigationManager NavigationManager
+@inject OpportunityService productservice
+
+
+<div class="card">
+    <h5 class="card-header">
+        <i class="fas fa-search-dollar"></i>&nbsp;@NazivKlijenta&nbsp;&nbsp;<b>@Kamata</b> @KamataScoring
+    </h5>
+    <div class="card-body" style="height:@height;overflow-y: scroll;font-size:12px;visibility:@IsVisible;">
+        <div class="box">
+            <div class="row">
+                <div class="col-md-4"><b>Bonitet:</b>&nbsp;@Bonitet</div>
+                <div class="col-md-8"><b>Prihodi(zad./pros.):</b>@(FormattedAmount(Prihodi))<b>/</b>@(FormattedAmount(PrihodiProslagodina))</div>
+            </div>
+            <div class="row">
+                <div class="col-md-4"><b>Kapital:</b>@(FormattedAmount(Kapital))</div>
+                <div class="col-md-8"><b>Dobit(zad./pros.):</b>@(FormattedAmount(Dobit))<b>/</b>@(FormattedAmount(DobitProslagodina))</div>
+
+            </div>
+            <div class="row">
+                <div class="col-md-4"><b>Aktiva:</b>@(FormattedAmount(Aktiva))</div>
+                <div class="col-md-8"><b>Dug.Ob.FI/Krat.Ob.FI:</b>@(FormattedAmount(DugorocneObvezeFI))<b>/</b>@(FormattedAmount(KratkorocneObvezeFI))</div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4"><b>EBITDA:</b>@(FormattedAmount(Ebitda))</div>
+                <div class="col-md-4"><b>Br.Zap.:</b>&nbsp;@BrZaposlenih</div>
+                <div class="col-md-4"><b>GodinaOsnutka:</b>&nbsp;@GodinaOsnutka</div>
+            </div>
+            <div class="row">
+                <div class="col-md-8"><b>@BonitetnaOcijenaOpisno:</b>&nbsp;@BonitetOcijena</div>
+                <div class="col-md-4" style="color:#0026ff;"><b>Blokade:</b>&nbsp;@Blokade</div>
+            </div>
+            <div class="row" style="border-top:solid;border-width:thin;">
+                <div class="col-md-12"><b>@KapitalOpisno:</b>&nbsp;@KapitalOcijena</div>
+            </div>
+            <div class="row">
+                <div class="col-md-12"><b>@ZaduzenostOpisno:</b>&nbsp;@ZaduzenostOcijena</div>
+            </div>
+            <div class="row">
+                <div class="col-md-12"><b>@OtplataIzDobitiOpisno:</b>&nbsp;@OtplataIzDobitiOcijena</div>
+            </div>
+            <div class="row">
+                <div class="col-md-12"><b>@EbitdaKROpisno:</b>&nbsp;@EbitdaKROcijena</div>
+            </div>
+            <div class="row">
+                <div class="col-md-12"><b>@PlasmanVSprihodOpisno:</b>&nbsp;@PlasmanVSprihodcijena</div>
+            </div>
+            <div class="row">
+                <div class="col-md-12"><b>@PorastPrihodaOpisno:</b>&nbsp;@PorastPrihodaOcijena</div>
+            </div>
+            <div class="row">
+                <div class="col-md-12"><b>@KoefOstObvOpisno:</b>&nbsp;@KoefOstObvcijena</div>
+            </div>
+            <div class="row">
+                <div class="col-md-12"><b>@DobitDrustvaOpisno:</b>&nbsp;@DobitDrustvaOcijena</div>
+            </div>
+            <div class="row">
+                <div class="col-md-12"><b>@PromjenaRezultataOpisno:</b>&nbsp;@PromjenaRezultataOcijena</div>
+            </div>
+            <div class="row">
+                <div class="col-md-12"><b>@VelicinaOpisno:</b>&nbsp;@VelicinaOcijena</div>
+            </div>
+            <div class="row">
+                <div class="col-md-12"><b>@KoefPostojanjaOpisno:</b>&nbsp;@KoefPostojanjaOcijena</div>
+            </div>
+            <div class="row">
+                <div class="col-md-12"><b>@UrednostOpisno:</b>&nbsp;@UrednostOcijena</div>
+            </div>
+            <div class="row" style="border-top:solid;border-width:thin;">
+                <div class="col-md-12" style="color:#0026ff;"><b>@KvalitetaPlasmanaOpisno:</b>&nbsp;@KvalitetaPlasmanaOcijena</div>
+            </div>
+        </div>
+
+
+
+    </div>
+</div>
+
+@code {
+
+    public bool hasScor = false;
+
+
+
+    public int Height { get; set; }
+    public int Width { get; set; }
+    public string height { get; set; }
+
+    async Task GetDimensions()
+    {
+        var dimension = await Service.GetDimensions();
+        Height = dimension.Height;
+        Width = dimension.Width;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await GetDimensions();
+        // StateHasChanged();
+        if (Width < 700 )
+        {
+            if (hasScor)
+            {
+                height = "620px";
+            }
+            else
+            {
+                height = "50px";
+            }
+
+        }
+        else
+        {
+            height = "415px";
+        }
+        StateHasChanged();
+    }
+
+    protected string IsVisible { get; set; } = "visible";
+    protected string Kamata { get; set; } = "Kamata:";
+
+    [Parameter]
+    public string OpportunityId { get; set; }
+
+    [Parameter]
+    public string KlientOib { get; set; }
+
+    public string Result { get; set; }
+    public bool PostojePodaci { get; set; }
+
+    public string NazivKlijenta { get; set; }
+    public string Bonitet { get; set; }
+    public string Godina { get; set; }
+    public string Prihodi { get; set; }
+    public string Dobit { get; set; }
+    public string ProslaGodina { get; set; }
+    public string PrihodiProslagodina { get; set; }
+    public string DobitProslagodina { get; set; }
+    public string Kapital { get; set; }
+    public string Aktiva { get; set; }
+    public string Ebitda { get; set; }
+    public string DugorocneObvezeFI { get; set; }
+    public string KratkorocneObvezeFI { get; set; }
+    public string BrZaposlenih { get; set; }
+    public string GodinaOsnutka { get; set; }
+    public string Blokade { get; set; }
+    public string BonitetnaOcijenaOpisno { get; set; }
+    public string BonitetOcijena { get; set; }
+    public string KapitalOpisno { get; set; }
+    public string KapitalOcijena { get; set; }
+    public string ZaduzenostOpisno { get; set; }
+    public string ZaduzenostOcijena { get; set; }
+    public string OtplataIzDobitiOpisno { get; set; }
+    public string OtplataIzDobitiOcijena { get; set; }
+    public string EbitdaKROpisno { get; set; }
+    public string EbitdaKROcijena { get; set; }
+    public string PlasmanVSprihodOpisno { get; set; }
+    public string PlasmanVSprihodcijena { get; set; }
+    public string KoefOstObvOpisno { get; set; }
+    public string KoefOstObvcijena { get; set; }
+    public string PorastPrihodaOpisno { get; set; }
+    public string PorastPrihodaOcijena { get; set; }
+    public string DobitDrustvaOpisno { get; set; }
+    public string DobitDrustvaOcijena { get; set; }
+    public string PromjenaRezultataOpisno { get; set; }
+    public string PromjenaRezultataOcijena { get; set; }
+    public string VelicinaOpisno { get; set; }
+    public string VelicinaOcijena { get; set; }
+    public string KoefPostojanjaOpisno { get; set; }
+    public string KoefPostojanjaOcijena { get; set; }
+    public string UrednostOpisno { get; set; }
+    public string UrednostOcijena { get; set; }
+
+    public string KvalitetaPlasmanaOpisno { get; set; }
+    public string KvalitetaPlasmanaOcijena { get; set; }
+    public string KamataScoring { get; set; }
+
+
+    private Scoring scoring = new();
+    Prilike prscupdt = new();
+    protected async override void OnInitialized()
+    {
+        int id = Convert.ToInt32(OpportunityId);
+        if (id > 0)
+        {
+            Klijenti klijenti = productservice.getKlijentById(id);
+            prscupdt = await productservice.GetPrilikaById(id);
+            /********************crko rest************************************/
+            FinancialScoring(KlientOib, prscupdt.Vrijednost_objekta, klijenti.Tip);
+
+
+        }
+
+
+
+
+    }
+    string str;
+
+    public string FormattedAmount(string svalute)
+    {
+        string strback = "";
+        try
+        {
+            decimal d = Convert.ToDecimal(svalute);
+            strback = string.Format("{0:C}", d);
+        }
+        catch (Exception ex)
+        {
+
+            strback = "";
+        }
+
+        return strback;
+    }
+
+    protected void FinancialScoring(String oib, decimal valLeasing, string tip, int? period = null)
+    {
+        try
+        {
+
+
+
+            dynamic FinancialScoring = FinancSCORING_DynamicArray(oib, valLeasing, tip, period);
+            string oibFromResult = FinancialScoring.CompanyInfoData.Oib;
+            /*************************************************************/
+            Result = FinancialScoring.CompanyInfoData.rezultat;
+            PostojePodaci = FinancialScoring.CompanyInfoData.postojepodaci;
+
+            if (!PostojePodaci)
+            {
+                IsVisible = "collapse";
+                Kamata = Result;
+            }
+
+
+            NazivKlijenta = FinancialScoring.CompanyInfoData.NazivKlijenta;
+            Bonitet = FinancialScoring.CompanyInfoData.Bonitet;
+            Godina = FinancialScoring.CompanyInfoData.Godina;
+            Prihodi = FinancialScoring.CompanyInfoData.Prihodi;
+            Dobit = FinancialScoring.CompanyInfoData.Dobit;
+            ProslaGodina = FinancialScoring.CompanyInfoData.ProslaGodina;
+            PrihodiProslagodina = FinancialScoring.CompanyInfoData.PrihodiProslagodina;
+            DobitProslagodina = FinancialScoring.CompanyInfoData.DobitProslagodina;
+            Kapital = FinancialScoring.CompanyInfoData.Kapital;
+            Aktiva = FinancialScoring.CompanyInfoData.Aktiva;
+            Ebitda = FinancialScoring.CompanyInfoData.Ebitda;
+            DugorocneObvezeFI = FinancialScoring.CompanyInfoData.DugorocneObvezeFI;
+            KratkorocneObvezeFI = FinancialScoring.CompanyInfoData.KratkorocneObvezeFI;
+            BrZaposlenih = FinancialScoring.CompanyInfoData.BrZaposlenih;
+            GodinaOsnutka = FinancialScoring.CompanyInfoData.GodinaOsnutka;
+            Blokade = FinancialScoring.CompanyInfoData.Blokade;
+            /******************************BONITETNAOCIJENA*********************************/
+            BonitetnaOcijenaOpisno = FinancialScoring.BONITETNAOCIJENA.BonitetnaOcijenaOpisno;
+            BonitetOcijena = FinancialScoring.BONITETNAOCIJENA.BonitetOcijena;
+            /******************************KOEFICIJENTKAPITALA*********************************/
+            KapitalOpisno = FinancialScoring.KOEFICIJENTKAPITALA.KapitalOpisno;
+            KapitalOcijena = FinancialScoring.KOEFICIJENTKAPITALA.KapitalOcijena;
+            /******************************OBVEZEPREMABANKAMA*********************************/
+            ZaduzenostOpisno = FinancialScoring.OBVEZEPREMABANKAMA.ZaduzenostOpisno;
+            ZaduzenostOcijena = FinancialScoring.OBVEZEPREMABANKAMA.ZaduzenostOcijena;
+            /******************************OTPLATAIZDOBITI*********************************/
+            OtplataIzDobitiOpisno = FinancialScoring.OTPLATAIZDOBITI.OtplataIzDobitiOpisno;
+            OtplataIzDobitiOcijena = FinancialScoring.OTPLATAIZDOBITI.OtplataIzDobitiOcijena;
+            /******************************KOEFICIJENTRATEUEBITDA*********************************/
+            EbitdaKROpisno = FinancialScoring.KOEFICIJENTRATEUEBITDA.EbitdaKoefResult.EbitdaKROpisno;
+            EbitdaKROcijena = FinancialScoring.KOEFICIJENTRATEUEBITDA.EbitdaKoefResult.EbitdaKROcijena;
+            /******************************PLASMANVSPRIHOD*********************************/
+            PlasmanVSprihodOpisno = FinancialScoring.PLASMANVSPRIHOD.PlasmanVSprihodOpisno;
+            PlasmanVSprihodcijena = FinancialScoring.PLASMANVSPRIHOD.PlasmanVSprihodcijena;
+            /******************************KOEFICIJENTOSTALIHOBVEZA*********************************/
+            KoefOstObvOpisno = FinancialScoring.KOEFICIJENTOSTALIHOBVEZA.KoefOstObvOpisno;
+            KoefOstObvcijena = FinancialScoring.KOEFICIJENTOSTALIHOBVEZA.KoefOstObvcijena;
+            /******************************PORASTPRIHODA*********************************/
+            PorastPrihodaOpisno = FinancialScoring.PORASTPRIHODA.PorastPrihodaOpisno;
+            PorastPrihodaOcijena = FinancialScoring.PORASTPRIHODA.PorastPrihodaOcijena;
+            /******************************DOBITDRUSTVA*********************************/
+            DobitDrustvaOpisno = FinancialScoring.DOBITDRUSTVA.DobitDrustvaOpisno;
+            DobitDrustvaOcijena = FinancialScoring.DOBITDRUSTVA.DobitDrustvaOcijena;
+            /******************************PROMJENAREZULTATA*********************************/
+            PromjenaRezultataOpisno = FinancialScoring.PROMJENAREZULTATA.PromjenaRezultataOpisno;
+            PromjenaRezultataOcijena = FinancialScoring.PROMJENAREZULTATA.PromjenaRezultataOcijena;
+            /******************************VELICINA**************VelicinaResult*******************/
+            VelicinaOpisno = FinancialScoring.VELICINA.VelicinaResult.VelicinaOpisno;
+            VelicinaOcijena = FinancialScoring.VELICINA.VelicinaResult.VelicinaOcijena;
+            /******************************KOEFPOSTOJANJADRUSTVA*********************************/
+            KoefPostojanjaOpisno = FinancialScoring.KOEFPOSTOJANJADRUSTVA.KoefPostojanjaOpisno;
+            KoefPostojanjaOcijena = FinancialScoring.KOEFPOSTOJANJADRUSTVA.KoefPostojanjaOcijena;
+            /******************************UREDNOSTSERVISIRANJAOBAVEZA*********************************/
+            UrednostOpisno = FinancialScoring.UREDNOSTSERVISIRANJAOBAVEZA.UrednostOpisno;
+            UrednostOcijena = FinancialScoring.UREDNOSTSERVISIRANJAOBAVEZA.UrednostOcijena;
+            /******************************"OCJENAPROCJENEODOBRENJA":*********************************/
+            KvalitetaPlasmanaOpisno = FinancialScoring.OCJENAPROCJENEODOBRENJA.KvalitetaPlasmanaOpisno;
+            KvalitetaPlasmanaOcijena = FinancialScoring.OCJENAPROCJENEODOBRENJA.KvalitetaPlasmanaOcijena;
+            KamataScoring = FinancialScoring.OCJENAPROCJENEODOBRENJA.KamataScoring;
+
+            if (KamataScoring.Length > 0)
+            {
+                prscupdt.PredKamata = Convert.ToDecimal(KamataScoring.Replace(".", ",")); ;
+            }
+            else
+            {
+                prscupdt.PredKamata = 0.00m;
+            }
+            hasScor = true;
+            productservice.UpdtPrilikaKamata(prscupdt);
+
+
+        }
+        catch (Exception ex)
+        {
+            NazivKlijenta = Bonitet = Godina = Prihodi = Dobit = ProslaGodina = PrihodiProslagodina = Kapital = Ebitda = DugorocneObvezeFI = KratkorocneObvezeFI = BrZaposlenih = GodinaOsnutka = Blokade = string.Empty;
+            BonitetnaOcijenaOpisno = BonitetOcijena = KapitalOpisno = KapitalOcijena = ZaduzenostOpisno = ZaduzenostOcijena = OtplataIzDobitiOpisno = OtplataIzDobitiOcijena = EbitdaKROpisno = EbitdaKROcijena = PlasmanVSprihodOpisno = PlasmanVSprihodcijena = string.Empty;
+            KoefOstObvOpisno = KoefOstObvcijena = PorastPrihodaOpisno = PorastPrihodaOcijena = DobitDrustvaOpisno = DobitDrustvaOcijena = PromjenaRezultataOpisno = PromjenaRezultataOcijena = VelicinaOpisno = VelicinaOcijena = KoefPostojanjaOpisno = KoefPostojanjaOcijena = UrednostOpisno = UrednostOcijena = string.Empty;
+            KvalitetaPlasmanaOpisno = KvalitetaPlasmanaOcijena = KamataScoring = string.Empty;
+            hasScor = false;
+            IsVisible = "hidden";
+        }
+    }
+
+
+
+    public void RefreshMe(String msg)
+    {
+        StateHasChanged();
+        int id = Convert.ToInt32(msg);
+        Klijenti klijenti = productservice.getClientById(id);
+        decimal valLeasing = 100000;
+
+        FinancialScoring(klijenti.OIB, valLeasing, klijenti.Tip);
+
+    }
+
+}

@@ -1,0 +1,980 @@
+﻿@*EditOffer.razor*@
+@using System.Text.RegularExpressions;
+@using Radzen
+@using CrmExpert.Model
+@using CrmExpert.Data
+@using Radzen.Blazor
+@using System.Net
+@using System.Net.Mail
+@using FluentEmail.Core;
+@using FluentEmail.Smtp;
+@using Microsoft.AspNetCore.Mvc;
+@using System.IO;
+@inject OpportunityService productservice
+@inject SelectedPonudaDobavljac AppData
+@inject NavigationManager NavigationManager
+@inject IJSRuntime jsRuntime
+
+
+<div class="row">
+    <div class="col-md-9 col-md-push-3 alert-heading"> Primatelj leasinga:&nbsp;&nbsp; @Klijent.ImeTvrtke,@Klijent.PostanskiBroj&nbsp;@Klijent.Sjediste,@Klijent.Adresa</div>
+    <div class="col-md-3 col-md-pull-9">OIB:&nbsp;@Klijent.OIB</div>
+</div>
+
+@{
+    int i = 0;
+    string val = "";
+}
+<div class="table-responsive">
+    <table class="table table-bordered">
+
+        <thead class="font-weight-normal small">
+            <tr>
+                <th>Rbr.</th>
+                <th>Dobavljač</th>
+                <th>Sjedište</th>
+                <th>Oib</th>
+                <th>Virijednost</th>
+                <th>Valuta</th>
+                <th>Tečaj</th>
+                <th>Vrij. opreme&nbsp;(kn)</th>
+
+            </tr>
+        </thead>
+        @foreach (ListaPonudaDobavljaciView pr in selected)
+        {
+            i += 1;
+            val = pr.OznakaValute;
+            // Klijent = pr.
+
+            <tr class="font-weight-normal small">
+                <td>@i.</td>
+                <td>@pr.ImeDobavljaca</td>
+                <td>@pr.SjedisteDobavljac</td>
+                <td>@pr.OIBDobavljac</td>
+                <td>@pr.VrijednostPondeVal.ToString("N")</td>
+                <td>@pr.OznakaValute</td>
+                <td>@pr.Tecaj</td>
+                <td>@pr.VrijednostOpreme.ToString("N")</td>
+            </tr>
+
+        }
+        <tr>
+            <td colspan="8" style="text-align:right"> Ukupna vrijednost:&nbsp;@ukupnokn.ToString("N")&nbsp;@oznakavalute</td>
+        </tr>
+
+    </table>
+</div>
+<button @onclick="e => this.Collapsed = !this.Collapsed" class="btn btn-secondary  btn-sm">
+
+    Stavke ponude @{ if (this.Collapsed)
+        {
+            @((MarkupString)up)
+
+        }
+        else
+
+        {
+            @((MarkupString)down)
+
+        }
+    }
+</button>
+@{int rbr = 0; }
+<div class="panel panel-default border  @(Collapsed? "collapse": "" ) ">
+    <div class="card" hidden="@IsShowscoring">
+        @if (stavkeponude != null)
+        {
+
+            <table class="table table-success table-striped ">
+                <tr>
+                    <th scope="col">Rbr.</th>
+                    <th scope="col">Tip Opreme</th>
+                    <th scope="col">Vendor</th>
+                    <th scope="col">Vrijednost</th>
+                    <th scope="col">Vr.period</th>
+                    <th scope="col">Utjecaj(%)</th>
+
+                </tr>
+                @foreach (var stvk in stavkeponude)
+                {
+                    rbr = rbr + 1;
+                    <tr>
+                        <td class="text-left">
+                            @rbr.
+                        </td>
+                        <td class="text-left">
+                            @stvk.TipOpreme
+                        </td>
+                        <td class="text-left">
+                            @stvk.Vendor
+                        </td>
+                        <td class="text-left">
+                            @stvk.Value
+                        </td>
+                        <td class="text-left">
+                            @stvk.VremPeriodMj
+                        </td>
+                        <td class="text-left">
+                            @stvk.Utjecaj
+                        </td>
+
+
+                    </tr>
+                }
+            </table>
+            <span style="padding:0px;font-size:small;">@Poruka</span>
+        }
+
+    </div>
+</div>
+
+
+
+<div class="container">
+
+    <div class="row my-4">
+        <div class="col">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-sm d-flex">
+                        <div class="card  flex-fill">
+                            <div class="card">
+                                <h5 class="card-header">
+                                    <i class="fas  fa-landmark"></i>&nbsp;Parametri Leasinga
+                                </h5>
+                                <div class="card-body">
+
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control alert alert-primary border-3 font-weight-bolder col-md-9 ">
+                                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@PredKamata&nbsp;%
+                                        </div>
+                                        <div class="form-control alert alert-primary border-3 font-weight-bold  col-md-9">
+                                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@OstatakVrijednosti&nbsp;%
+                                        </div>
+                                    </div>
+
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control form-control-lg alert-secondary border-3 font-weight-bolder col-md-9">
+                                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ugovoreni iznos:&nbsp;&nbsp;@ukupno.ToString("N2")&nbsp;@oznakavalute
+                                        </div>
+                                        <div class="form-control alert-secondary border-3 font-weight-bolder col-md-9">
+                                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Financirani iznos:&nbsp;&nbsp;@ukupnofinancirano.ToString("N2")&nbsp;@oznakavalute
+                                        </div>
+                                    </div>
+
+
+
+
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control border-0 col-md-5">Vrsta leasinga:</div>
+                                        <div class="form col-md col-md-8">
+                                            <RadzenDropDown AllowClear="true" TValue="int" AllowVirtualization="true" Style="width:100%;font-size:medium;" Placeholder="Odaberite Vrstu leasinga"
+                                                            AllowFiltering="false" Data=@vrsta_Leasingas TextProperty="Naziv" ValueProperty="Id_Vrsta_Leasinga" @bind-Value="@Ponuda.Id_Vrsta_Leasinga"
+                                                            Change="@(args => ChangeBound(args, "Vrstaleasinga"))" />
+                                        </div>
+                                    </div>
+
+
+
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control border-0 col-md-5">Valuta/tečaj ponude:</div>
+                                        <div class="form col-md col-md-4">
+                                            <RadzenDropDown AllowClear="true" TValue="int" AllowVirtualization="true" Placeholder="Odaberite valutu ponude" Style="width:100%;font-size:medium;"
+                                                            AllowFiltering="false" Data=@valute TextProperty="Oznaka" ValueProperty="IDValute" @bind-Value="@Ponuda.ValPon"
+                                                            Change="@(args => ChangeBound(args, "Valutaponude"))" />
+                                        </div>
+                                        <div class="form col-md col-md-4">
+                                            <RadzenNumeric TValue="decimal" Format="N2" @bind-Value="@Ponuda.TecPon" @bind-Value:format="oninput" Style="width:100%;font-size:medium;" Min="0"
+                                                           Change="@(args => OnInputTecaj(args, "Tecaj"))" />
+                                        </div>
+                                    </div>
+
+
+
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control border-0 col-md-5">Datum ponde:</div>
+                                        <div class="form col-md col-md-8">
+                                            <RadzenDatePicker @bind-Value=@dtnow Style="width:100%;font-size:medium;" Change=@(args => OnChange(args, "DateOffer", "dd.MM.yyyy hh:mm")) Class="w-100"
+                                                              ShowTime="true" HourFormat="12" DateFormat="dd.MM.yyyy" />
+                                        </div>
+                                    </div>
+
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control border-0 col-md-5">Način plaćanja:</div>
+                                        <div class="form col-md col-md-8">
+                                            <RadzenDropDown AllowClear="true" TValue="int" AllowVirtualization="true" Style="width:100%;font-size:medium;"
+                                                            AllowFiltering="false" Data=@nacin_placanja TextProperty="Naziv" ValueProperty="id" @bind-Value=@Ponuda.NacinPl
+                                                            Change="@(args => ChangeBound(args, "nacinplacanja"))" />
+                                        </div>
+                                    </div>
+
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control border-0 col-md-5">Trajanje ugovora(mj):</div>
+                                        <div class="form col-md col-md-4">
+                                            <RadzenDropDown AllowClear="true" TValue="int" AllowVirtualization="true" Style="width:100%;font-size:medium;" @bind-Value=@Ponuda.VremPerMj
+                                                            AllowFiltering="false" Data=@brojmjeseci TextProperty="id" ValueProperty="id"
+                                                            Change="@(args => ChangeBound(args, "Brojmjeseci"))" />
+                                        </div>
+                                        <div class="form col-md col-md-4">
+                                            <RadzenNumeric TValue="int" Min="0" Max="100" Format="0" Step="1" @bind-Value=@Ponuda.VremPerMj Style="width:100%;font-size:smaller;"
+                                                           Change="@(args => ChangeBound(args, " Brojmjeseci"))" @oninput="@FilterChangedBrMj" />
+                                        </div>
+                                    </div>
+
+
+
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control border-0 col-md-5">Trošak obrade(%):</div>
+                                        <div class="form col-md col-md-4">
+                                            <RadzenNumeric TValue="Decimal" Placeholder="0,00" Min="0" Max="100" Format="0.00" Step="0.5" @bind-Value=@Ponuda.TrObr
+                                                           Change=@(args => OnChange(args, "Trosak")) @oninput="@FilterChangedAsync" style="width:100%;font-size:medium;" />
+                                        </div>
+                                        <div class="form col-md col-md-4">
+                                            <div class="form-control alert-light col-md col-md-6t">@trosakneto.ToString("N2")&nbsp;@oznakavalute</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control border-0 col-md-5">Jamčevina(%):</div>
+                                        <div class="form col-md col-md-4">
+                                            <RadzenNumeric Format="0.00" TValue="Decimal" Placeholder="0,00" Min="0" Max="100" Step="0.5" Disabled="@IsDisabled1" @bind-Value=@Ponuda.Jamcevina
+                                                           Change=@(args => OnChange(args, "Jamcevina")) style="width:100%;font-size:medium;"  @oninput=@(args => OnChange(args.Value, "Jamcevina"))/>
+                                        </div>
+                                        <div class="form col-md col-md-4">
+                                            <div class="form-control alert-light col-md col-md-6t">@jamcevinaneto.ToString("N2")&nbsp;@oznakavalute</div>
+                                        </div>
+                                    </div>
+
+
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control border-0 col-md-5">Akontacija(%):</div>
+                                        <div class="form col-md col-md-4">
+                                            <RadzenNumeric TValue="Decimal" Placeholder="0,00" Min="0" Max="100" Disabled="@IsDisabled1" Step="0.5" @bind-Value=@Ponuda.Akontacija
+                                                           Format="0.00" Change=@(args => OnChange(args, "Akontacija")) style="width:100%;font-size:medium;"  @oninput=@(args => OnChange(args.Value, "Akontacija")) />
+                                        </div>
+                                        <div class="form col-md col-md-4">
+                                            <div class="form-control alert-light col-md col-md-6t">@akontacijaneto.ToString("N2")&nbsp;@oznakavalute</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control border-0 col-md-5">Učešće(%):</div>
+                                        <div class="form col-md col-md-4">
+                                            <RadzenNumeric TValue="double" Placeholder="0,00" Min="0" Max="100" Disabled="@IsDisabled2" Step="0.5"
+                                                           Format="0.00" Change=@(args => OnChange(args, "Ucesce")) style="width:100%;font-size:smaller;"  @oninput=@(args => OnChange(args.Value, "Ucesce"))/>
+                                        </div>
+                                        <div class="form col-md col-md-4">
+                                            <div class="form-control alert-light col-md col-md-6t">@ucesceneto.ToString("N2")&nbsp;@oznakavalute</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control border-0 col-md-5">Ostatatk vrijednosti(%):</div>
+                                        <div class="form col-md col-md-4">
+                                            <RadzenNumeric TValue="Decimal" Placeholder="0,00" Min="0" Max="100" Disabled="@IsDisabled1" Step="0.1" @bind-Value=@Ponuda.OstVr
+                                                           Format="0.00" Change=@(args => OnChange(args, "Ostatak"))  style="width:100%;font-size:smaller;" @oninput=@(args => OnChange(args.Value, "Ostatak"))/>
+                                        </div>
+                                        <div class="form col-md col-md-4">
+                                            <div class="form-control alert-light col-md col-md-6t">@ostatakneto.ToString("N2")&nbsp;@oznakavalute</div>
+                                        </div>
+                                    </div>
+
+
+
+
+                                </div>
+                            </div>
+
+
+                            <div class="card">
+                                <h5 class="card-header">
+                                    <i class="fas  fa-archway"></i>&nbsp;&nbsp;&nbsp;Uvjeti kupnje objekta leasinga
+                                </h5>
+                                <div class="card-body">
+
+
+                                    <div class="form-row mt-3">
+                                        <div class="col-4">
+                                            <label>Porabat(%):</label>
+                                        </div>
+                                        <div class="col">
+                                            <RadzenNumeric TValue="Decimal" Min="0.0m" Max="50.00m" Value="@porabat" Step="0.04" Format="0.00"
+                                                           Change=@(args => OnChange(args, "Porabat")) @oninput="@FilterChangedAsync5" />
+                                        </div>
+                                        <div class="col">
+                                            <div class="form-control alert-light col-md col-md-7">@porabatneto.ToString("N2")&nbsp;@oznakavalute</div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+
+                        </div>
+
+
+                        <div class="card" style="width:550px;">
+
+
+                            <div class="card">
+                                <h5 class="card-header">
+                                    <i class="fas fa-gem"></i>&nbsp;&nbsp;&nbsp;Kalkulacija Leasinga
+                                </h5>
+                                <div class="card-body">
+
+
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control alert-info font-weight-bolder col-md-4">Multiplikator:</div>&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <div class="form-control alert-light col-md font-weight-bolder col-md-2">@faktor</div>&nbsp;&nbsp;
+                                        <div class="form-control alert-info font-weight-bolder col-md-2">Faktor:</div>&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <div class="form-control alert-light col-md font-weight-bolder col-md-3">@pmtPrice&nbsp;%</div>&nbsp;&nbsp;
+                                    </div>
+
+
+
+
+                                    <table class="table table-bordered table-dark ">
+
+                                        <tr>
+                                            <td class="">
+                                                <button class="btn btn-primary btn-sm" @onclick="DecrementCount"><i class="fas fa-angle-double-left"></i></button>
+                                            </td>
+                                            <td>
+                                                <RadzenSlider Min="0" Max="14.00m" @bind-Value=@value Style="width:260px; height:20px; " Step="0.04"
+                                                              TValue="double" Change="SliderChange" />
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-primary btn-sm" @onclick="IncrementCount"><i class="fas fa-angle-double-right"></i></button>
+                                            </td>
+                                        </tr>
+                                    </table>
+
+
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control alert-info font-weight-bolder col-md-5">Rata leasinga:</div>&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <div class="form-control alert-light col-md font-weight-bolder col-md-6">@rataleasinga.ToString("N2")&nbsp;@oznakavalute</div>&nbsp;&nbsp;
+                                    </div>
+
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control alert-info font-weight-bolder col-md-5">Suma rata bez(AK ili UČ):</div>&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <div class="form-control alert-light col-md font-weight-bolder col-md-3">@rataleasingaakuc.ToString("N2")&nbsp;@oznakavalute</div>&nbsp;&nbsp;
+                                        <div class="form-control alert-secondary col-md font-weight-bolder col-md-3">@rataleasingato&nbsp;%</div>&nbsp;&nbsp;
+                                    </div>
+
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control alert-info font-weight-bolder col-md-5">Suma rata + TO:</div>&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <div class="form-control alert-light col-md font-weight-bolder col-md-3">@rataleasingaakuctrosak.ToString("N2")&nbsp;@oznakavalute</div>&nbsp;&nbsp;
+                                        <div class="form-control alert-secondary col-md font-weight-bolder col-md-3">@rataleasingaakucto&nbsp;%</div>&nbsp;&nbsp;
+                                    </div>
+
+
+
+
+                                </div>
+                                <div class="card">
+                                    <h5 class="card-header">
+                                        <i class="fas  fa-gem"></i>&nbsp;&nbsp;&nbsp;Parametri profitabilnosti
+                                    </h5>
+                                    <div class="card-body">
+
+                                        <div class="input-group input-group-sm mb-3">
+                                            <div class="form-control alert-info font-weight-bolder col-md-5">Cash Saldo:</div>&nbsp;&nbsp;&nbsp;&nbsp;
+                                            <div class=@stlcshsaldoIznos>@cashsaldoIznos.ToString("N2")&nbsp;%</div>&nbsp;&nbsp;
+                                            <div class=@stlcshsaldo>@cashsaldo.ToString("N2")&nbsp;@oznakavalute</div>&nbsp;&nbsp;
+                                        </div>
+
+
+
+                                        <div class="input-group input-group-sm mb-3">
+                                            <div class="form-control alert-info font-weight-bolder col-md-5">Profit od Neta:</div>&nbsp;&nbsp;&nbsp;&nbsp;
+                                            <div class=@stlprofitfromnet>@profitfromnet.ToString("N2")&nbsp;%</div>&nbsp;&nbsp;
+                                            <div class=@stlprofitfromnetnum>@profitfromnetnum.ToString("N2")&nbsp;@oznakavalute</div>&nbsp;&nbsp;
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="card">
+                                <h5 class="card-header">
+                                    <i class="fas fa-key"></i>&nbsp;&nbsp;&nbsp;Usluge
+                                </h5>
+                                <div class="card-body">
+
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control alert-info col-md-5">Usluge:</div>&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <div class="form-control alert-light col-md col-md-6">@uslugeuk.ToString("N2")&nbsp;@oznakavalute</div>&nbsp;&nbsp;
+                                    </div>
+
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control alert-info col-md-5">SafeGuard:</div>&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <div class="form-control alert-light col-md col-md-6">
+                                            <RadzenCheckBox @bind-Value=@checkBox1Value TValue="bool" Change=@(args => OnChangeSG(args, "CheckBox1")) />
+                                        </div>
+                                    </div>
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control alert-info col-md-5">SafePlan:</div>&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <div class="form-control alert-light col-md col-md-6">
+                                            <RadzenCheckBox @bind-Value=@checkBox2Value TValue="bool" Change=@(args => OnChangeSP(args, "CheckBox2")) />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="card" hidden="@IsShow">
+                                <h5 class="card-header">
+                                    <i class="fas fa-user-lock"></i>&nbsp;&nbsp;&nbsp;SAFE GUARD
+                                </h5>
+                                <div class="card-body">
+
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control alert-info  col-md-5">Stacionarna:</div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <RadzenNumeric Step="1" TValue="double" Value="@stacionarna" @oninput="@FilterChangedAsyncstacionarna"
+                                                       Change=@(args => FilterChanged(args, "Stacionarna")) />
+                                    </div>
+
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="form-control alert-info  col-md-5">Prijenosna:</div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <RadzenNumeric TValue="double" Value="@prijenosna" @oninput="@FilterChangedAsyncprijenosna"
+                                                       Change=@(args => FilterChangedP(args, "Prijenosna")) />
+                                    </div>
+
+
+
+
+
+                                    @if (@stacionarna > 0 | @prijenosna > 0)
+                                    {
+
+                                        <table class="table w-auto small mr-2 ml-2">
+
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th scope="col">Rbr.</th>
+                                                    <th scope="col">Predmet osiguranja</th>
+                                                    <th scope="col">Nab. vrij. opreme</th>
+                                                    <th scope="col">Mjesečno</th>
+                                                    <th scope="col">Godišnje</th>
+                                                </tr>
+                                            </thead>
+                                            @if (@stacionarna > 0)
+                                            {
+                                                <tr>
+                                                    <td>1.</td>
+                                                    <td>@stac</td>
+                                                    <td>@stacionarna.ToString("N2")</td>
+                                                    <td>@mjstacionarna</td>
+                                                    <td>@ukgodstacionarna</td>
+                                                </tr>
+
+                                            }
+                                            @if (@prijenosna > 0)
+                                            {
+                                                <tr>
+                                                    <td>1.</td>
+                                                    <td>@prij</td>
+                                                    <td>@prijenosna.ToString("N2")</td>
+                                                    <td>@mjprijenosna</td>
+                                                    <td>@ukgodprijenosna</td>
+                                                </tr>
+                                            }
+                                            <tr>
+
+                                                <td colspan="2" style="text-align:right;font-weight: bold;">Sveukupno:</td>
+                                                <td>@(Math.Round((Double)prijenosna + stacionarna, 2, MidpointRounding.AwayFromZero).ToString("N2"))</td>
+                                                <td>@(Math.Round((Double)mjstacionarna + mjprijenosna, 2, MidpointRounding.AwayFromZero).ToString("N2"))</td>
+                                                <td>@(Math.Round((Double)ukgodstacionarna + ukgodprijenosna, 2, MidpointRounding.AwayFromZero).ToString("N2"))</td>
+                                            </tr>
+                                        </table>
+
+                                    }
+
+                                </div>
+                            </div>
+                            <div class="card" hidden="@IsShowSafePlan">
+                                <div class="card">
+                                    <h5 class="card-header">
+                                        <i class="fas fa-building"></i>&nbsp;&nbsp;&nbsp;SafePlan
+                                    </h5>
+                                    <div class="card-body">
+
+
+
+
+
+                                        <div class="form-row mt-3">
+                                            <div class="col-4">
+                                                <label>Održavanje/mj (KN):</label>
+                                            </div>
+                                            <div class="col">
+                                                <RadzenNumeric Style="width:60%" TValue="double" Min="0" Max="100" Value="@odrzavanjemj"
+                                                               Change=@(args => OnChange(args, "odrzavanjemj")) @oninput="@FilterChangedAsync9" />
+                                            </div>
+                                            <div class="col">
+                                                <div class="input-group-text">@odrzavanjemj.ToString("N2")&nbsp;kn</div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (@IsVisible == true)
+            {
+                <div class="container-fluid " style="margin-top: 0%">
+                    <div class="row ">
+
+                        <div class="col">
+                            <div class="card text-right">
+                                <div class="card-header">
+
+                                    <div class="d-flex flex-row-reverse">
+                                        <div class="p-2">  <button class="btn btn-primary" type="submit" @onclick="@OnSubmitNote">Submit</button></div>
+                                        <div class="p-2"><div class="@($"{@mystyle}")"> @StatusPoruka</div></div>
+
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="container-fluid " style="margin-top: 0%">
+                    <div class="row ">
+                        <div class="col">
+                            <div class="card text-right">
+                                <div class="card-header">
+                                    <div class="d-flex flex-row-reverse">
+
+
+                                        <div class="d-flex flex-row-reverse">
+                                            <button class="btn btn-primary" type="submit" @onclick="@OnEmailPage">Email/Preview</button>
+                                       
+
+                                        </div>
+
+
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            }
+
+
+
+
+        </div>
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+@code {
+
+
+    protected bool IsVisible { get; set; } = true;
+    object IdKontaktls;
+
+    System.Net.Mail.Attachment attachment { get; set; }
+
+    string down = "&nbsp;&#x25BC;";
+    public string up = "&nbsp;&#9650;";
+    //public string down  = "< i class='fas fa-angle-down'></i>";
+    private bool Collapsed = true;
+    public string Collapse { get; set; } = "collapse"; // hide by default
+    void CollapseScoring()
+    {
+        //  Collapse = !Collapse;
+
+    }
+
+    public async Task NavigateToNewTab()
+    {
+        string url = "/counter";
+        await jsRuntime.InvokeAsync<object>("open", url, "_blank");
+    }
+
+    bool checkBox1Value = false;
+
+    bool checkBox2Value = false;
+
+    int direction = 0;
+
+    double faktorizr = 0.00d;
+
+    void OnChangeSG(bool? value, string name)
+    {
+        if (name == "CheckBox1")
+        {
+            IsShow = !IsShow;
+
+            if ((bool)value)
+            {
+                Ponuda.SafeGuard = true;
+                stacionarna = 0;
+                mjstacionarna = 0;
+                ukgodstacionarna = 0;
+                prijenosna = 0;
+                mjprijenosna = 0;
+                ukgodprijenosna = 0;
+                usluge = ukgodstacionarna + ukgodprijenosna + odrzavanjemj;
+                uslugeuk = usluge;
+            }
+            else
+            {
+                Ponuda.SafeGuard = false;
+                stacionarna = 0;
+                mjstacionarna = 0;
+                ukgodstacionarna = 0;
+                prijenosna = 0;
+                mjprijenosna = 0;
+                ukgodprijenosna = 0;
+                usluge = ukgodstacionarna + ukgodprijenosna + odrzavanjemj;
+                uslugeuk = usluge;
+                Ponuda.SGIznStac = 0.00m;
+                Ponuda.SGIznPrijen = 0.00m;
+            }
+
+        }
+        else
+        {
+            Ponuda.SafeGuard = false;
+        }
+    }
+    void OnChangeSP(bool? value, string name)
+    {
+        if (name == "CheckBox2")
+        {
+            IsShowSafePlan = !IsShowSafePlan;
+            if ((bool)value)
+            {
+                Ponuda.SafePlan = true;
+                odrzavanjemj = 0d;
+                usluge = ukgodstacionarna + ukgodprijenosna + odrzavanjemj;
+                uslugeuk = usluge;
+                // Ponuda.SGIznStac = 0.00m;
+                // Ponuda.SGIznPrijen = 0.00m;
+            }
+            else
+            {
+                Ponuda.SafePlan = false;
+                odrzavanjemj = 0d;
+                usluge = ukgodstacionarna + ukgodprijenosna + odrzavanjemj;
+                uslugeuk = usluge;
+                Ponuda.SPIZnosHRK = 0.00m;
+
+            }
+
+
+        }
+        else
+        {
+            Ponuda.SafePlan = false;
+        }
+    }
+
+    double value = 0.00d;
+    public double step = 0.0d;
+    double steperset = 0.0d;
+    [Parameter]
+    public double progress { get; set; } = 0.0d;
+    int currentCount = 0;
+    void IncrementCount()
+    {
+        if (faktor < 54)
+        {
+            value = Math.Round((Double)value + 0.01, 2);
+            SliderChange(value);
+        }
+    }
+    void DecrementCount()
+    {
+
+        if (faktor > -2)
+        {
+            value = Math.Round((Double)value - 0.01, 2);
+            direction = -1; SliderChange(value);
+        }
+    }
+    void SliderChange(Double value)
+    {
+        if (value > 0)
+        {
+            step = value + 0.01 + 4.50;
+        }
+        else
+        {
+            step = 4.50;
+
+        }
+        step = Math.Round((Double)step, 2);
+        showFaktor(step);
+    }
+
+
+    bool showValue = true;
+    void showFaktor(double step)
+    {
+
+
+        FunctionForPMT(step);
+        // pmtPrice = Math.Round(pmtPrice, 7, MidpointRounding.AwayFromZero);
+        // FunctionForPMT(step);
+    }
+
+
+    void OnInput(string value, string name)
+    {
+        if (name == "Ukupno")
+        {
+            ukupno = Convert.ToDecimal(value);
+        }
+        //if (name == "Tecaj")
+        //{
+        //    decimal tecaj = Convert.ToDecimal(value);
+        //    Ponuda.TecPon = ukupno * tecaj;
+        //}
+    }
+
+
+    void OnInputTecaj(object val, string name)
+    {
+        if (name == "Tecaj" && val.ToString().Length > 0)
+        {
+            decimal tecajval = Convert.ToDecimal(val);
+            Ponuda.TecPon = tecajval;
+            tecaj = (double)Ponuda.TecPon;
+            decimal uk = vrijednostObjekta();
+            if (tecajval > 1)
+            {
+                decimal ukupnowrk = uk / (decimal)tecaj;
+                ukupno = Math.Round(ukupnowrk, 2, MidpointRounding.AwayFromZero);
+            }
+            else
+            {
+                decimal ukupnowrk = uk * (decimal)tecaj;
+                ukupno = Math.Round(ukupnowrk, 2, MidpointRounding.AwayFromZero);
+            }
+
+            FunctionForPMT(step);
+        }
+    }
+
+
+    public List<string> ListaKontakata { get; set; }
+
+    void OnAddEmail(object value, string name)
+    {
+        if (ListaKontakata != null)
+        {
+            ListaKontakata.Clear();
+        }
+        else
+        {
+            ListaKontakata = new();
+        }
+        if (value != null)
+        {
+            List<string> collection = new List<string>((IEnumerable<string>)value);
+            if (collection.Count > 0)
+            {
+                ishtmlTemplSend = true;
+                foreach (string email in collection)
+                {
+                    ListaKontakata.Add(email);
+                }
+            }
+        }
+    }
+
+    void OnAddTmpl(object value, string name)
+    {
+        int idpon = Convert.ToInt32(PonudaIdstr);
+        if (idpon > 0) ishtmlTempl = true;
+        productservice.UpdtHtmlTemplate(idpon, (int)value);
+
+
+    }
+
+
+    void SendMails()
+    {
+
+        foreach (string email in ListaKontakata)
+        {
+            string[] tokens = email.Split(new char[] { ';' }, 2, 0);
+           
+            Guid g = Guid.Parse(Ponuda.Uid_Dokument.ToString());
+
+            Messages msg = new Messages();
+            msg.Uid_Dokument = g;
+            msg.id_Document = 1;
+            msg.DateTimeOfCreation = DateTime.Now;
+            msg.DateTimeOfUpdate = DateTime.Now;
+            msg.NumberOfFailures = 0;
+            msg.Sender = "User";
+            msg.MessageEventType_Id = 0;
+            msg.MessageStatus_Id = 0;
+            msg.MessageType_Id = 0;
+            msg.Receivers = tokens[1].ToString(); ;
+            msg.Subject = "Ponuda";
+            msg.ImePrezime = tokens[0].ToString();
+            productservice.InsMessages(msg);
+        }
+    }
+
+
+
+
+    //  public void SendMail(string email, Guid suid, Attachment data)
+    public void SendMail(string email, Guid suid)
+    {
+        try
+        {
+            //Kontakti Kontakt = productservice.GetContactByEmail(email);
+            //MailMessage mail = new MailMessage();
+            //SmtpClient SmtpServer = new SmtpClient("mail.expert-i4next.hr");
+            //mail.IsBodyHtml = true;
+            //mail.From = new MailAddress("messenger@expert-i4next.hr");
+            //mail.To.Add("ivica.jelavic@i4next.hr");
+            //mail.Subject = "Test Mail for:" + email;
+            //// mail.Body = "http://192.168.5.205:8081/" + suid.ToString();
+            //string adresa = "http://192.168.5.205:8081/" + suid.ToString();
+            //// mail.Body
+            //string body = getBody(adresa, Kontakt);
+            //mail.Body = body;
+            ////System.Net.Mail.Attachment attachment = geStream();
+            ////mail.Attachments.Add(new Attachment(@"C:\Users\ijelavic\Downloads\HtmlToPdf.pdf"));
+            ////mail.Attachments.Add(attachment);
+            //SmtpServer.Port = 587;
+            //SmtpServer.Credentials = new System.Net.NetworkCredential("messenger@expert-i4next.hr", "mer5lot!");
+            //SmtpServer.EnableSsl = true;
+
+            //SmtpServer.Send(mail);
+
+            //Messages msg = new Messages();
+            //msg.Uid_Dokument = suid;
+            //msg.id_Document = 1;
+            //msg.DateTimeOfCreation = DateTime.Now;
+            //msg.DateTimeOfUpdate = DateTime.Now;
+            //msg.NumberOfFailures = 0;
+            //msg.Sender = "User";
+            //msg.MessageEventType_Id = 0;
+            //msg.MessageStatus_Id = 0;
+            //msg.MessageType_Id = 1;
+            //msg.Receivers = "";
+            //msg.Subject = "Ponuda";
+
+
+
+
+
+
+
+            // productservice.InsMessages()
+
+
+
+        }
+        catch (Exception ex)
+        {
+            //log ex
+        }
+    }
+
+    public string getBody(String adresa, Kontakti kontakt)
+    {
+        //String body = "<div style='max-width:100%;box-sizing:border-box; background:#161616'>"+adresa+"</div>";
+
+        //return body;
+        ///  String str="<div style='line-height: 24px;'> <font face='Arial, Helvetica, sans-serif' size='4' color='#57697e' style='font-size: 15px;'> <span style='font-family: Arial, Helvetica, sans-serif; font-size: 15px; color: #57697e;'> 123123123</span><p style='font-family: Arial, Helvetica, sans-serif; font-size: 15px;color: #57697e;text-align:left;'>' </p></font></div>";
+
+        return "<!DOCTYPE html> " +
+                "<html xmlns=\"http://www.w3.org/1999/xhtml\">" +
+                 "<meta http-equiv='Content - Type' content='text / html; charset = UTF - 8'><head>" +
+                      "<meta http-equiv='X - UA - Compatible' content='IE = edge'>" +
+             " <meta name='google' value='notranslate'>" +
+                          "<title>Email</title>" +
+                            " <style>" +
+                            "body{}" +
+                          "  </style>" +
+                    "</head>" +
+
+
+                    "<body>" +
+                         "<img  src='http://expert-i4next.hr/wp-content/uploads/2019/11/Expert-Vector-s-i4next-mali-1.png'>" +
+                       "<span style='font-family: Arial, Helvetica, sans-serif; font-size: 15px; color: #57697e;'>" + "</div>" +
+                        "<div style='line-height: 24px;'> Ime i prezime : " + kontakt.Ime + " " + kontakt.Prezime + "</div>" +
+                        "<div style='line-height: 24px;'> Adresa : " + kontakt.Adresa + "," + kontakt.Grad + "</div>" +
+                        "<div style='line-height: 24px;'> Email : " + kontakt.EmailAdresa + "</span>" +
+                    "<div> Pogledajte našu ponudu na webu.Ukoliko ne možete otvoriti dokument zalijepite poveznicu u adresnu traku Vašeg preglednika." +
+                    "<div> Ponuda:  " + adresa + "</div>" +
+
+                    "</body>" +
+                "</html>";
+    }
+
+    public void geStream()
+    {
+        //System.Net.Mail.Attachment attachment;
+        // attachment = new System.Net.Mail.Attachment("your attachment file");
+        try
+        {
+            string url = "http://192.168.5.205:8081/" + Ponuda.Uid_Dokument.ToString();
+            HtmlToPdf htmlToPdfConverter = new HtmlToPdf();
+            byte[] pdfBuffer = null;
+            pdfBuffer = htmlToPdfConverter.ConvertUrlToMemory(url);
+            FileResult fileResult = new FileContentResult(pdfBuffer, "application/pdf");
+            string file = Ponuda.Uid_Dokument.ToString() + ".pdf";
+            fileResult.FileDownloadName = file;
+            // Attachment data = new Attachment(file, MediaTypeNames.Application.Pdf);
+            MemoryStream ms = new MemoryStream(pdfBuffer);
+            attachment = new Attachment(ms, file, "application/pdf");
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+        // return attachment;
+    }
+
+
+    public void OnEmailPage()
+    {
+        NavigationManager.NavigateTo("/HandlOffer/" + OfferId  + "/"+ PonudaIdstr + "/" + sifraTmpl);
+
+    }
+
+
+
+
+}
+
+
+
+

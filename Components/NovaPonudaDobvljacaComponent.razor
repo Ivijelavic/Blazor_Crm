@@ -1,0 +1,667 @@
+﻿@page "/NovaPonudaDobvljacaComponent/{TenderId}/{OppId}"
+@using Radzen.Blazor
+@using CrmExpert.Model
+@using CrmExpert.Data
+@using System.Web;
+@using System.IO;
+@using CrmExpert.Controller;
+@using Microsoft.AspNetCore.Hosting
+
+@inject IWebHostEnvironment Environment
+@inject NavigationManager NavigationManager
+@inject OpportunityService productservice
+@inject IWebHostEnvironment env
+
+
+<div id="user" class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-md-offset-3">
+            <div class="card login-logout-tab">
+                <div class="card">
+
+
+
+                    <div class="card login-logout-tab">
+
+                        <h5 class="card-header">
+                            <i class="fas fa-user-lock"></i>&nbsp;&nbsp;&nbsp;Ponuda dobavljača/ kopija ponude/ stavke ponude
+                        </h5>
+
+                        <div class="@($"{@mystyle}")">Status: @Status</div>
+                        <section>
+
+
+                            <EditForm Model=@model OnValidSubmit=@Submit>
+                                <ObjectGraphDataAnnotationsValidator />
+
+                                <div class="form-group row form-control-lg mt-0">
+                                    <label class="col-sm-3 col-form-label" style="font-size: small;">Dobavljači:</label>
+                                    <div class="col-sm-9">
+                                        <div style="font-size:10px !important;">
+                                            <RadzenDropDown AllowClear="true" TValue="int" AllowVirtualization="true" Style="width:100%" Placeholder="Odaberite klijenta"
+                                                            AllowFiltering="true" Data=@klijenti TextProperty="ImeTvrtke" ValueProperty="IDKlijenta" Disabled=@disvalue
+                                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                            @bind-Value="@model.IDDobavljac" Change=@(args => OnChange(args, "Klijent")) />
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row form-control-lg mt-0">
+                                    <label class="col-sm-3 col-form-label" style="font-size: small;"> Opis opreme:</label>
+                                    <div class="col-sm-9">
+                                        <div style="font-size:10px !important;">
+                                            <InputText id="opis" Class="form-control" @bind-Value="@model.OpisPonude" Disabled=@disvalue Style="width:100%" />
+                                            <ValidationMessage For="(()=>model.OpisPonude)"></ValidationMessage>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row form-control-lg mt-1">
+                                    <label class="col-sm-3 col-form-label" style="font-size: small;">Vrijednost opreme:</label>
+                                    <div class="col-sm-9">
+                                        <div style="font-size:10px !important;">
+                                            <RadzenNumeric @bind-Value=@model.VrijednostPondeVal @bind-Value:format="oninput" Style="width:100%" TValue="decimal" Format="N2"
+                                                           Change="@(args => OnChange(args, "VrijednostPonude"))">
+
+                                            </RadzenNumeric>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row form-control-lg mt-1">
+                                    <label class="col-sm-3 col-form-label" style="font-size: small;">Valuta:</label>
+                                    <div class="col-sm-9">
+                                        <div style="font-size:10px !important;">
+                                            <RadzenDropDown AllowClear="true" TValue="int" AllowVirtualization="true" Style="width:100%" Placeholder="Odaberite valutu"
+                                                            AllowFiltering="false" Data=@valute TextProperty="Oznaka" ValueProperty="IDValute" Disabled=@disvalue
+                                                            @bind-Value="@model.Valuta" />
+                                            <ValidationMessage For="(()=>model.Valuta)"></ValidationMessage>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row form-control-lg mt-1">
+                                    <label class="col-sm-3 col-form-label" style="font-size: small;">PDV:</label>
+                                    <div class="col-sm-9">
+                                        <div style="font-size:10px !important;">
+                                            <RadzenNumeric TValue="decimal" Id="vrobj" Class="form-control" @bind-Value="@model.PDV" @bind-Value:format="oninput" Format="N2" Style="width:100%"></RadzenNumeric>
+                                            <ValidationMessage For="(()=>model.PDV)"></ValidationMessage>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <div class="form-group row form-control-lg mt-1">
+                                    <label class="col-sm-3 col-form-label" style="font-size: small;">Tečaj:</label>
+                                    <div class="col-sm-9">
+                                        <div style="font-size:10px !important;">
+                                            <RadzenNumeric Id="vrobj" Class="form-control" @bind-Value="@model.Tecaj" @bind-Value:format="oninput" Format="N2" TValue="decimal" Style="width:100%"></RadzenNumeric>
+                                            <ValidationMessage For="(()=>model.PDV)"></ValidationMessage>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row form-control-lg mt-5">
+                                    <div class="col-sm-9">
+                                        <div style="font-size:10px !important;">
+                                            <input type="submit" value="Save" class="btn btn-primary" style="visibility:@showsubmit" />
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </EditForm>
+                            <br />
+                            <div class="card">
+                                <div class="card-header">
+                                    Ponude dobavljača: prilozi
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">@Message</p>
+                                    <form @onsubmit="OnSubmit">
+                                        <InputFile OnChange="OnInputFileChange" multiple />
+                                        <br /><br />
+                                        <button type="submit" class="btn btn-primary">Spremi ponudu dobavljača</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <Stavke @ref="stavke" OppId=@OppId TenderId=@TenderId>
+
+    </Stavke>
+
+
+
+</div>
+
+
+
+
+
+
+
+@code {
+
+    IReadOnlyList<IBrowserFile> selectedFiles;
+    string Message = "Selektirajte prilog!";
+    void OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        selectedFiles = e.GetMultipleFiles();
+        Message = $"{selectedFiles.Count} ponude je selektirano";
+        this.StateHasChanged();
+    }
+
+    async void OnSubmit()
+    {
+
+        string fileName = string.Empty;
+        foreach (var file in selectedFiles)
+        {
+            try
+            {
+                fileName = file.Name;
+
+                int extensionIndex = fileName.LastIndexOf(".");
+                string fileExtension = fileName.Substring(extensionIndex);
+                fileName = fileName.Substring(0, extensionIndex);
+                fileName += ("_" + GetTimestamp(DateTime.Now) + fileExtension);
+
+
+                Stream stream = file.OpenReadStream(22000000000, default);
+                String tenOp = OppId.ToString() + "_" + TenderId.ToString();
+                var pathdobavljac = $"{env.WebRootPath}\\uploads\\" + tenOp;
+                var pathtest = $"{env.WebRootPath}\\uploads\\{file.Name}";
+                bool exists = System.IO.Directory.Exists(pathdobavljac);
+                if (!exists) System.IO.Directory.CreateDirectory(pathdobavljac);
+                var path = $"{env.WebRootPath}\\uploads\\" + tenOp + "\\" + fileName;
+                FileStream fs = File.Create(path);
+                await stream.CopyToAsync(fs);
+                stream.Close();
+                fs.Close();
+                getUplPonuda(fileName, Convert.ToInt32(OppId), Convert.ToInt32(TenderId));
+                Message = $"{selectedFiles.Count} ponude je spremljena na server!";
+            }
+            catch (Exception ex)
+            {
+                Message = $"{ex}";
+                //ex throw; 
+            }
+
+
+        }
+
+        this.StateHasChanged();
+    }
+
+    public static String GetTimestamp(DateTime value)
+    {
+        return value.ToString("ddMMyyyyHHmmss");
+    }
+
+
+
+    public void getUplPonuda(String Naziv, int idZahtj, int idPonude)
+    {
+        Ponude_Dobavljaci_Documents PonudaDobDoc = new();
+        try
+        {
+            PonudaDobDoc.Uid_Dokument = Guid.NewGuid();
+            PonudaDobDoc.Naziv = Naziv;
+            PonudaDobDoc.ChangeDate = DateTime.Now;
+            PonudaDobDoc.CreateDate = DateTime.Now;
+            PonudaDobDoc.ChangeBy = "User";
+            PonudaDobDoc.CreateBy = "User";
+            PonudaDobDoc.Id_PonudeDobavljaca = idPonude;
+            PonudaDobDoc.Id_Zahtjeva = idZahtj;
+            int resp = productservice.InsDokDobavljac(PonudaDobDoc);
+
+
+        }
+        catch (Exception ex)
+        {
+
+            //throw; ex
+        }
+
+    }
+    /********************************************************/
+
+
+
+
+    RadzenUpload upload;
+
+
+
+
+
+    Stavke stavke;
+
+
+    bool disabled = false;
+    List<string> artikli = new();
+    //List<Artikl> artikli = new();
+    List<SCORING_Param1> selectedbrands = new();
+
+    IEnumerable<KolijentView> klijenti;
+    string mystyle = "alert alert-secondary";
+
+    [Parameter]
+    public string TenderId { get; set; }
+    [Parameter]
+    public string OppId { get; set; }
+    string Status = "Podaci o ponudi dobavljača:";
+    ListaPonudaDobavljaci model;
+    IEnumerable<Valute> valute;
+    public string showsubmit { get; set; } = "visible";
+
+    public decimal valAmount { get; set; }
+
+    bool disvalue { get; set; } = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+
+        int id = Convert.ToInt32(TenderId);
+        if (id > 0)
+        {
+            model = new();
+            model = await Task.Run(() => productservice.getPonudaDobavljacById(id));
+            valAmount = model.VrijednostPondeVal = decimal.Round(model.VrijednostPondeVal, 2, MidpointRounding.AwayFromZero);
+            if (model.Tecaj == 0) model.Tecaj = 1;
+
+            valute = await Task.Run(() => productservice.GetValuteList1());
+
+            klijenti = await Task.Run(() => productservice.GetKlientsListIEN().ToList());
+            disvalue = true;
+
+            int br = await Task.Run(() => productservice.GetCountStavkePonudaDobavljaca(id));
+            if (br > 0) showsubmit = "hidden";
+
+        }
+        else
+        {
+            model = new();
+            valute = await Task.Run(() => productservice.GetValuteList1());
+            klijenti = await Task.Run(() => productservice.GetKlientsListIEN().ToList());
+            model.Valuta = 51246;
+            model.PDV = 25;
+            disvalue = false;
+            model.Tecaj = 1;
+
+        }
+        model.Id_Prilike = Convert.ToInt32(OppId);
+        artikli = await Task.Run(() => productservice.GetVrstaArtiklaList());
+        //brands = await Task.Run(() => productservice.GetBrandsList());
+        // stv.OznakaValute = valute.FirstOrDefault(x => x.IDValute == model.Valuta).Oznaka;
+    }
+    //Stavka stv = new();
+    //public void ChangeBound(object value, string name)
+    //{
+    //    //  selectedbrands.Clear();
+
+    //    switch (name)
+    //    {
+    //        case "VrstaArtikla":
+    //            if (value != null)
+    //            {
+    //                stv.Naziv = value.ToString();
+    //                stv.UkupnaCijena = model.VrijednostPondeVal;
+    //                valAmount = model.VrijednostPondeVal;
+    //                selectedbrands.Clear();
+    //               // GetBrends(value, null);
+    //            }
+    //            else
+    //            {
+    //                //timeLog.PayrollJob = null;
+    //            }
+    //            break;
+    //        case "Brand":
+    //            if (value != null)
+    //            {
+
+    //                int id = Convert.ToInt32(value);
+    //                stv.Brand = productservice.getBrand(id);
+    //                //GetBrends(value, null);
+    //            }
+    //            else
+    //            {
+    //                //timeLog.PayrollJob = null;
+    //            }
+    //            break;
+    //    }
+    //}
+    //public void GetBrends(object value, string name)
+    //{
+    //    //phase = phase.ToList();
+    //    selectedbrands = productservice.GetBrandsList(value.ToString()).ToList();
+    //    //StateHasChanged();
+    //}
+
+
+    void OnChange(object value, string name)
+    {
+        if (name == "Klijent")
+        {
+            model.IDDobavljac = Int32.Parse(value.ToString());
+        }
+        //if (name == "Phase")
+        //{
+        //    if (value.ToString().Length > 3)
+        //    {
+        //        stv.Brand = value.ToString();
+        //    }
+        //}
+        if (name == "VrijednostPonude")
+        {
+
+            decimal d = decimal.Parse(value.ToString());
+            decimal dc = Math.Round(d, 4);
+            if (d != model.VrijednostPondeVal)
+            {
+                model.VrijednostPondeVal = d;
+            }
+
+        }
+    }
+
+    public async Task Submit(EditContext editContext)
+    {
+
+        bool validated = editContext.Validate();
+        if (model.IDDobavljac < 1)
+        {
+            validated = false;
+            Status = "Odaberite dobavljača!";
+            mystyle = "alert alert-danger";
+        }
+        if (model.VrijednostPondeVal < 100)
+        {
+            validated = false;
+            Status = "Upšite vrijednost ponude";
+            mystyle = "alert alert-danger";
+        }
+        if (model.OpisPonude == null)
+        {
+            validated = false;
+            Status = "Kratko opišite ponudu dobavljača";
+            mystyle = "alert alert-danger";
+        }
+        if (model.PDV < 0)
+        {
+            validated = false;
+            Status = "Upišite PDV";
+            mystyle = "alert alert-danger";
+        }
+        if (model.Tecaj < 1)
+        {
+            validated = false;
+            Status = "Upišite tečaj valute";
+            mystyle = "alert alert-danger";
+        }
+        if (validated)
+        {
+
+            int i = productservice.InsPonudaDobavljaca(model);
+            if (i > 0)
+            {
+                mystyle = "alert alert-success";
+                Status = "Podaci su uspješno spremljeni";
+
+                TenderId = i.ToString();
+                disvalue = true;
+
+                await Task.Delay(2000);
+                mystyle = "alert alert-secondary";
+                Status = "Podaci o ponudi dobavljača";
+
+                //  StateHasChanged();
+                // OnInitializedAsync();
+
+                // NavigationManager.NavigateTo("/NovaPonudaDobvljacaComponent/" + TenderId + "/"+ OppId);
+                stavke.UkupnaCijena = model.VrijednostPondeVal;
+
+            }
+            else
+            {
+                mystyle = "alert alert-danger";
+                Status = "Došlo je do greške prilikom spremanja prilike";
+                disvalue = false;
+            }
+        }
+
+    }
+
+    //#region "Kaskada Artikli"
+    //string selectedString = "";
+    //int selectedItem = 0;
+
+    //void OnSelect(ChangeEventArgs e)
+    //{
+    //    selectedbrands = null;
+    //    StateHasChanged();
+
+    //    selectedString = e.Value.ToString();
+    //    stv.Naziv = selectedString;
+
+    //    selectedbrands = productservice.GetBrandsList(selectedString);
+    //    selectedItem = 0;
+
+
+    //}
+    //void OnSelectBrand(ChangeEventArgs e)
+    //{
+    //    selectedString = e.Value.ToString();
+    //}
+
+    //#endregion
+
+
+    #region "View Model"
+    class Stavka
+    {
+        public string Naziv { get; set; }
+        public string Brand { get; set; }
+        public decimal Amount { get; set; }
+        public decimal Percentage { get; set; }
+        public decimal UkupnaCijena { get; set; }
+        public string OznakaValute { get; set; }
+
+    }
+    #endregion
+
+
+    //private void FilterChangedAsync(ChangeEventArgs args)
+    //{
+
+    //    int val = Convert.ToInt32(args.Value);
+    //    if (val > stv.Amount)
+    //    {
+    //        decimal value = (val / stv.UkupnaCijena) * 100;
+
+    //        stv.Percentage = (decimal)value;
+    //        stv.Amount = val;
+
+    //    }
+
+    //}
+
+
+    void OnInput(object value)
+    {
+        try
+        {
+            string inputString = value.ToString();
+            string str = inputString.Substring(inputString.Length - 1);
+            if (str != ".")
+            {
+                decimal d = decimal.Parse(value.ToString());
+                if (d != model.VrijednostPondeVal)
+                {
+                    model.VrijednostPondeVal = d;
+                }
+            }
+        }
+        catch (Exception)
+        {
+
+            //  throw;
+        }
+
+    }
+
+    void OnChange(UploadChangeEventArgs args, string name)
+    {
+        foreach (var file in args.Files)
+        {
+            string path1 = System.IO.Directory.GetCurrentDirectory();
+        }
+
+        // console.Log($"{name} changed");
+    }
+
+
+
+
+
+    //int progress;
+    //string info;
+    //async Task OnProgress(UploadProgressArgs args, string name)
+    //{
+    //    this.info = $"% '{name}' / {args.Loaded} of {args.Total} bytes.";
+    //    //this.progress = args.Progress;
+
+    //    string path1 = System.IO.Directory.GetCurrentDirectory();
+
+    //    foreach (var file in args.Files)
+    //    {
+    //        //    var path = Path.Combine(Environment.ContentRootPath, "wwwroot", "uploads", file.Name);
+    //        //    //using (FileStream SourceStream = File.Open(file.Name, FileMode.Open))
+    //        //    //{
+    //        //    //    //using (FileStream DestinationStream = File.Create(path))
+    //        //    //    //{
+    //        //    //    //    await SourceStream.CopyToAsync(DestinationStream);
+    //        //    //    //}
+    //        //    //}
+    //        //}
+    //        //this.info = $"% '{name}' / {args.Loaded} of {args.Total} bytes.";
+    //        //this.progress = args.Progress;
+
+    //        //if (args.Progress == 100)
+    //        //{
+    //        //    //console.Clear();
+    //        //    string RequestedPath =
+    //        //                "\\uploads\\";
+    //        //    if (RequestedPath.Contains("\\uploads\\"))
+    //        //    {
+    //        //        RequestedPath =
+    //        //            RequestedPath.Replace("\\uploads\\", "");
+    //        //    }
+    //        //    else
+    //        //    {
+    //        //        RequestedPath = "";
+    //        //    }
+
+    //        //foreach (var file in args.Files)
+    //        //{
+    //        //int length = 256;
+    //        //int bytesRead = 0;
+    //        //Byte[] buffer = new Byte[length];
+
+    //        var path = Path.Combine(Environment.ContentRootPath, "wwwroot", "uploads", file.Name);
+    //        string basePath = Environment.WebRootPath;
+    //        //FileStream fs = new(path, FileMode.Create);
+    //        //bytesRead = fs.Read(buffer, 0, length);
+    //        //fs.Write(buffer, 0, bytesRead);
+    //        //this.progress = args.Progress;
+
+    //        //using (FileStream DestinationStream = File.Create(path))
+    //        //{
+    //        //    await fs.CopyToAsync(DestinationStream);
+
+    //        //}
+
+    //        // MainFs();
+
+    //        MainFs(path);
+
+    //        //    //        info = $"Upl: {file.Name}/{file.Size} bytes";
+    //        //    //        String savePath = @"\uploads\";
+    //        //    //        if (file.Size > 0)
+    //        //    //        {
+
+    //        //    //            savePath += file.Name;
+    //        //    //            var memoryStream = new MemoryStream();
+
+    //        //    //        }
+    //        //    //        await Task.Delay(7000);
+    //        //    //        info = "";
+    //        //}
+    //    }
+    //}
+
+    public static void MainFs(string pathNew)
+    {
+        string pathSource = @"C:\Users\ijelavic\Downloads\barcode.png";
+        //string pathNew = @"c:\tests\newfile.txt";
+
+        try
+        {
+
+            using (FileStream fsSource = new FileStream(pathSource,
+                FileMode.Open, FileAccess.Read))
+            {
+
+                // Read the source file into a byte array.
+                byte[] bytes = new byte[fsSource.Length];
+                int numBytesToRead = (int)fsSource.Length;
+                int numBytesRead = 0;
+                while (numBytesToRead > 0)
+                {
+                    // Read may return anything from 0 to numBytesToRead.
+                    int n = fsSource.Read(bytes, numBytesRead, numBytesToRead);
+
+                    // Break when the end of the file is reached.
+                    if (n == 0)
+                        break;
+
+                    numBytesRead += n;
+                    numBytesToRead -= n;
+                }
+                numBytesToRead = bytes.Length;
+
+                // Write the byte array to the other FileStream.
+                using (FileStream fsNew = new FileStream(pathNew,
+                    FileMode.Create, FileAccess.Write))
+                {
+                    fsNew.Write(bytes, 0, numBytesToRead);
+                }
+            }
+        }
+        catch (FileNotFoundException ioEx)
+        {
+            Console.WriteLine(ioEx.Message);
+        }
+    }
+
+
+
+
+
+}
+
+

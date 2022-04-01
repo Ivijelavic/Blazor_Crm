@@ -1,0 +1,109 @@
+﻿@using Radzen.Blazor
+@using CrmExpert.Data
+@using CrmExpert.Model
+@inject NavigationManager NavigationManager
+@inject OpportunityService productservice
+@inject CrmExpert.Model.SelectedPonudaDobavljac AppData
+
+
+@if (ponudew == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="row no-gutters">
+        <div class="col-12 col-sm-12 col-md-12">
+            <div class="card  flex-fill">
+                <RadzenDataGrid AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowPaging="true" PageSize="6" SelectionMode="DataGridSelectionMode.Single"
+                                Data="@ponudew" TItem="PonudePrilikaView" ColumnWidth="100px" @bind-Value=@selectedPrilike AllowSorting="true"  RowSelect="Rowselect">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="PonudePrilikaView" Property="ImeDobavljaca" Title="Edit" Width="70px">
+                            <Template Context="PonudePrilikaView">
+                                <RadzenButton Icon="edit" Size="ButtonSize.Small" Click="@(args => EditRow(PonudePrilikaView))" @onclick:stopPropagation="true" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="PonudePrilikaView" Property="Broj" Title="Br." Width="50px"> </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="PonudePrilikaView" Property="Godina" Title="God"> </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="PonudePrilikaView" Property="CreateDate" Title="Datum kreiranja">
+                            <Template Context="data">
+                                @String.Format("{0:dd.MM.yy}", data.CreateDate)
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="PonudePrilikaView" Property="Vrsta_Leasinga" Title="Vrsta"> </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="PonudePrilikaView" Property="VremPerMj" Title="Br.mjeseci" Width="80px"> </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="PonudePrilikaView" Property="VrijOprUkHRK" Title="Vrijednost">
+                            <Template Context="data">
+                                @String.Format("{0:N2}", data.VrijOprUkHRK)
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="PonudePrilikaView" Property="OznakaValPon" Title="Valuta"> </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="PonudePrilikaView" Property="ImeDobavljaca" Title="Modify" Width="70px">
+                            <Template Context="PonudePrilikaView">
+                                <RadzenButton Icon="build" Size="ButtonSize.Small" Click="@(args => EditRowCopy(PonudePrilikaView))" @onclick:stopPropagation="true" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+                </div>
+            </div>
+    </div>
+                }
+
+
+                @code {
+
+                    List<Ponude_Dobavljaci_Documents> dokumenti;
+
+
+                    [Parameter]
+                    public string OpportunityId { get; set; }
+                    IEnumerable<ListaPonudaDobavljaciView> dobavljaci;
+                    IEnumerable<PonudePrilika> ponude;
+                    IEnumerable<PonudePrilikaView> ponudew;
+                    IList<PonudePrilikaView> selectedPrilike;
+
+                    protected override async Task OnInitializedAsync()
+                    {
+
+
+                        AppData.ClearProduct();
+                        int id = Convert.ToInt32(OpportunityId);
+                        if (id > 0)
+                        {
+                            // dobavljaci = await Task.Run(() => productservice.PrilikaDobavljaciList(id));
+                            //  ponude = await Task.Run(() => productservice.getOffToClients(id));
+                            ponudew = await Task.Run(() => productservice.getOffViewToClients(id));
+                        }
+                    }
+
+
+                    void AddFileToList(object value, object name)
+                    {
+
+
+                    }
+
+                    public string url = "offer";
+                    void EditRow(PonudePrilikaView ponuda)
+                    {
+                        NavigationManager.NavigateTo(url + "/" + Convert.ToInt32(OpportunityId) + "/" + ponuda.idListePonuda + "/view");
+                    }
+                    void EditRowCopy(PonudePrilikaView ponuda)
+                    {
+                        NavigationManager.NavigateTo(url + "/" + Convert.ToInt32(OpportunityId) + "/" + ponuda.idListePonuda + "/copy"  );
+                    }
+
+                    public void Rowselect(object value)
+                    {
+
+                        PonudePrilikaView viewPD = (PonudePrilikaView)value;
+                        // dokumenti = await productservice.GetDokDobavljaci(viewPD., viewPD.Id_Prilike);
+
+                    }
+
+
+
+                }

@@ -1,0 +1,399 @@
+﻿@page "/OppDetailComponent/{OpportunityId}"
+@using Radzen.Blazor
+@using CrmExpert.Model
+@using CrmExpert.Data
+@inject NavigationManager NavigationManager
+@inject OpportunityService productservice
+
+
+
+
+
+<div class="row my-4">
+
+
+   
+
+    <div class="col ml-2">
+        &nbsp;&nbsp; &nbsp;&nbsp;<NavLink href=@("AddClient/" + model.Prilika.Id_Klijenta + "/0/")><font style="font-family:Arial;"><i class="fas fa-info-circle"></i></font>@klijent.ImeTvrtke</NavLink>
+
+
+        <section>
+            <EditForm Model=@model OnValidSubmit=@Submit>
+                <ObjectGraphDataAnnotationsValidator />
+
+                <div class="form-group row form-control-lg mt-0">
+                    <label class="col-sm-3 col-form-label" style="font-size: small;">Opis opreme:</label>
+                    <div class="col-sm-9">
+                        <div style="font-size:10px !important;">
+                            <InputText id="opis" Class="form-control" @bind-Value="@model.Prilika.OpisObjLeas" Style="width:100%;font-size:small;" />
+                            <ValidationMessage For="(()=>model.Prilika.OpisObjLeas )"></ValidationMessage>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row form-control-lg mt-0">
+                    <label class="col-sm-3 col-form-label" style="font-size: small;">Vrijednost opreme:</label>
+                    <div class="col-sm-9">
+                        <div style="font-size:10px !important;">
+                            <InputText Id="vrobj" Class="form-control" @bind-Value=@vrijednostObjekjta @bind-Value:format="oninput"
+                                       Style="width:100%; font-size:small;" Disabled="true">
+
+                            </InputText>
+                            <ValidationMessage For="(()=>model.Prilika.Vrijednost_objekta )"></ValidationMessage>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row form-control-lg mt-0 mb-1">
+                    <label class="col-sm-3 col-form-label" style="font-size: small;">Opis zahtjeva:</label>
+                    <div class="col-sm-9">
+                        <div style="font-size:10px !important;">
+                            <RadzenTextArea Id="body" Class="form-control" @bind-Value="@model.Prilika.Naziv" Style="width:100%;font-size:small;"></RadzenTextArea>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row form-control-lg mt-4 ">
+                    <label class="col-sm-3 col-form-label" style="font-size: small;">Naziv ugovora:</label>
+                    <div class="col-sm-9">
+                        <div style="font-size:10px !important;">
+                            <InputText Id="body" Class="form-control" @bind-Value="@model.Prilika.NazivUgovora" Style="width:100%;font-size:small;"></InputText>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="col-xs-1 mt-4 mb-1" align="left">
+                    Status
+                    <hr class="solid mt-0">
+                </div>
+
+                <div class="form-group row form-control-lg mt-0 ">
+                    <label class="col-sm-3 col-form-label" style="font-size: small;">Status:</label>
+                    <div class="col-sm-9">
+                        <div style="font-size:10px !important;">
+                            <RadzenDropDown AllowClear="true" TValue="int" AllowVirtualization="true" Style="width:100%;font-size:small;" Placeholder="Odaberite status prilike"
+                                            AllowFiltering="false" Data=@model.Statuses TextProperty="model.Statuses.Naziv" ValueProperty="model.Statuses.Id_Statusa"
+                                            @bind-Value="@model.Prilika.StatPril"
+                                            Change=@(args => OnChange(args, "Status")) />
+                            <ValidationMessage For="(()=>model.Prilika.StatPril)"></ValidationMessage>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row form-control-lg mt-0 ">
+                    <label class="col-sm-3 col-form-label" style="font-size: small;">Odobrenje:</label>
+                    <div class="col-sm-9">
+                        <div style="font-size:10px !important;">
+                            <RadzenDropDown AllowClear="true" TValue="int" AllowVirtualization="true" Style="width:100%;font-size:small;" Placeholder="Odaberite status odobrenja"
+                                            AllowFiltering="false" Data=@model.StatusOdobrenja TextProperty="model.StatusOdobrenja.Naziv" ValueProperty="model.StatusOdobrenja.Id_Statusa"
+                                            @bind-Value="@model.Prilika.StatOdobr"
+                                            Change=@(args => OnChange(args, "StatusOdobrenja")) />
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="col-xs-1 mt-4 mb-1" align="left">
+                    Dodatni uvjeti
+                    <hr class="solid mt-0">
+                </div>
+
+
+
+
+
+                <div class="form-group row form-control-lg mt-0 ">
+                    <label class="col-sm-3 col-form-label" style="font-size: small;">Kolaterali:</label>
+                    <div class="col-sm-9">
+                        <div style="font-size:10px !important;">
+                            <RadzenDropDown Placeholder="Select..." Data="@model.Kolaterali" TextProperty="Naziv" ValueProperty="Id_Kolateral"
+                                            @bind-Value="@model.Prilika.Id_Kolateral"
+                                            Change=@(args => OnChange(args,"Kolaterali")) Style="width:100%;font-size:small;" />
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row form-control-lg mt-0 ">
+                    <label class="col-sm-3 col-form-label" style="font-size: small;">Jamac:</label>
+                    <div class="col-sm-9">
+                        <div style="font-size:10px !important;">
+                            <RadzenDropDown AllowClear="true" TValue="int" AllowVirtualization="false" Style="width:100%;font-size:small;" Placeholder="Odabir..."
+                                            AllowFiltering="false" Data=@klijenti TextProperty="ImeTvrtke" ValueProperty="IDKlijenta" @bind-Value="@model.Prilika.idJamac"
+                                            Change=@(args => OnChange(args, "Jamac")) />
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row form-control-lg mt-0 ">
+                    <label class="col-sm-3 col-form-label" style="font-size: small;">BuyBackUg:</label>
+                    <div class="col-sm-9">
+                        <div style="font-size:10px !important;">
+                            <RadzenDropDown AllowClear="true" TValue="int" AllowVirtualization="true" Style="width:100%;font-size:small;text-size-adjust:inherit;" Placeholder="Odaberite ByBackUgovor opciju"
+                                            AllowFiltering="false" Data=@model.BuyBackUgovor TextProperty="model.BuyBackUgovor.Naziv" ValueProperty="model.BuyBackUgovor.id"
+                                            @bind-Value="@model.Prilika.BuyBackUgovor"
+                                            Change=@(args => OnChange(args, "StatusOdobrenja")) />
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xs-1 mt-4 mb-1" align="left">
+                    Key account manager
+                    <hr class="solid mt-0">
+                </div>
+
+
+                <div class="form-group row form-control-lg mt-0 ">
+                    <label class="col-sm-3 col-form-label" style="font-size: small;">KAM:</label>
+                    <div class="col-sm-9">
+                        <div style="font-size:10px !important;">
+                            <RadzenDropDown AllowClear="true" TValue="int" AllowVirtualization="true" Style="width:100%;font-size:small;" Placeholder="Odaberite..."
+                                            AllowFiltering="false" Data=@operators TextProperty="Naziv" ValueProperty="keyKorisnik"
+                                            @bind-Value="@model.Prilika.idORGINATOR" />
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row form-control-lg mt-0 ">
+                    <label class="col-sm-3 col-form-label" style="font-size: small;">Oček. datum realizacije::</label>
+                    <div class="col-sm-9">
+                        <div style="font-size:10px !important;">
+                            <RadzenDatePicker @bind-Value=@model.Prilika.OcekDatReal Style="width:100%;font-size:small;" Change=@(args => OnChange(args, "DateOffer", "dd.MM.yyyy hh:mm"))
+                                              ShowTime="true" HourFormat="12" DateFormat="dd.MM.yyyy" />
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row form-control-lg mt-0 ">
+                    <label class="col-sm-3 col-form-label" style="font-size: small;">Vjerojatnost  realizacije(%):</label>
+                    <div class="col-sm-9">
+                        <div style="font-size:10px !important;">
+                            <InputNumber Class="form-control" @bind-Value="@model.Prilika.Probability" Style="width:100%;font-size:small;" TValue="int" @oninput="@FilterChangedAsync3"></InputNumber>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <div class="form-group row form-control-lg mt-4">
+                    <div>
+                        <div class="input-group">
+                            <input type="submit" value="Submit" class="btn btn-primary btn-outline-secondary" />
+                            <div class="panel-body panel-default ml-4  @(Collapsed? "collapse": "")">
+
+
+                                <div class=@poruka>
+                                    <small> @Status</small>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </EditForm>
+        </section>
+
+
+    </div>
+</div>
+
+
+
+
+        @code {
+            string mystyle = "alert alert-secondary";
+
+
+            public bool Collapsed { get; set; } = true;
+            public string poruka = "alert alert-danger";
+
+            [Parameter]
+            public string OpportunityId { get; set; }
+
+            public string _oib;
+            string vrijednostObjekjta { get; set; }
+
+            IEnumerable<Klijenti> klijenti;
+            Klijenti klijent;
+            List<Users> operators;
+            object IDKlijenta;
+            Prilike prilika;
+
+            CompositeModelOpp model = new();
+            string Status = "Upis prilike";
+            IEnumerable<int> multipleValues = new int[] { };
+
+            protected override async Task OnInitializedAsync()
+            {
+
+                int id = Convert.ToInt32(OpportunityId);
+
+                model = await productservice.Edit(id);
+                klijent = productservice.getClientById(model.Prilika.Id_Klijenta);
+                vrijednostObjekjta = String.Format("{0:N2}", model.Prilika.Vrijednost_objekta);
+                _oib = model.Prilika.Id_Klijenta.ToString();
+                operators = await Task.Run(() => productservice.GetUsersList().ToList());
+                /***********************/
+                klijenti = await Task.Run(() => productservice.GetKlientsList().ToList());
+
+            }
+
+            async Task Submit(EditContext editContext)
+            {
+                try
+                {
+                    Status = "Form submitted";
+                    bool resp = ValidationStatuses();
+                    if (!resp)
+                    {
+                        Status = "Prilika mora imati obdobrenje 'Risk Management-a'";
+                        Collapsed = false;
+                        poruka = "alert alert-danger";
+                        await Task.Delay(7000);
+                        Collapsed = true;
+                        return;
+                    }
+                    bool validated = editContext.Validate();
+                    if (validated)
+                    {
+                        prilika = new Prilike();
+                        prilika = (Prilike)model.Prilika;
+                        int i = productservice.InsOpportunity(prilika, null);
+                        if (i == 1)
+                        {
+                            //NavigationManager.NavigateTo("/DataManager");
+                            Status = "Prilika je uspješno pospremljena.";
+                            Collapsed = false;
+                            poruka = "alert alert-success";
+                            await Task.Delay(7000);
+                            Collapsed = true;
+
+
+                        }
+                        else
+                        {
+                            Status = "Došlo je do greške prilikom spremanja prilike";
+                            Collapsed = false;
+                            poruka = "alert alert-danger";
+                            await Task.Delay(7000);
+                            Collapsed = true;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+
+                    // throw;
+                }
+
+
+
+            }
+
+            bool ValidationStatuses()
+            {
+                bool resp = false;
+                int stodbr = model.Prilika.StatOdobr;
+                int stprlk = model.Prilika.StatPril;
+
+
+                try
+                {
+                    if(stodbr < 4 && stprlk == 5)
+                    {
+                        resp = false;
+                    }
+                    else
+                    {
+                        resp = true;
+                    }
+
+                }
+                catch (Exception ex)
+                {
+
+                    // throw;
+                }
+                return resp;
+            }
+
+            [Parameter]
+            public EventCallback<string> OnClick { get; set; }
+            void OnChange(object value, string name)
+            {
+                //var str = value is IEnumerable<object> ? string.Join(", ", (IEnumerable<object>)value) : value;
+                if (name == "Status")
+                {
+                    model.Prilika.StatPril = Int32.Parse(value.ToString());
+                }
+                if (name == "Klijent")
+                {
+                    // if (Int32.Parse(value.ToString()) == 0) return;
+                    model.Prilika.Id_Klijenta = Int32.Parse(value.ToString());
+                    _oib = model.Prilika.Id_Klijenta.ToString();
+                    OnClick.InvokeAsync(_oib);
+                    // KlientChanged.InvokeAsync("564564");
+                    // KlientChanged?.Invoke(model.Prilika.Id_Klijenta.ToString());
+
+                }
+                else if (name == "Kolaterali")
+                {
+                    model.Prilika.Id_Kolateral = Int32.Parse(value.ToString());
+                }
+                else if (name == "Jamac")
+                {
+                    model.Prilika.idJamac = Int32.Parse(value.ToString());
+                }
+
+                var str = value is IEnumerable<object> ? string.Join(", ", (IEnumerable<object>)value) : value;
+            }
+
+            //private Task OnPasswordChanged(ChangeEventArgs e)
+            // {
+            //  Password = e.Value.ToString();
+
+            //  return PasswordChanged.InvokeAsync(Password);
+            //  }
+
+            void OnChange(DateTime? value, string name, string format)
+            {
+                try
+                {
+                    if (IsvalidDateTime(value.ToString()))
+                    {
+                        model.Prilika.OcekDatReal = Convert.ToDateTime(value);
+                    }
+                    else
+                    {
+                        model.Prilika.OcekDatReal = DateTime.Now;
+                    }
+                }
+                catch (Exception)
+                {
+
+                    throw;
+                }
+            }
+
+            static bool IsvalidDateTime(string date)
+            {
+                DateTime dt;
+                return DateTime.TryParse(date, out dt);
+            }
+
+
+            private void FilterChangedAsync3(ChangeEventArgs args)
+            {
+                try
+                {
+                    model.Prilika.Probability = Convert.ToInt32(args.Value);
+                }
+                catch (Exception ex)
+                {
+                    return;
+                }
+
+            }
+
+
+
+
+
+
+
+
+        }

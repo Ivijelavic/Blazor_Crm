@@ -1,0 +1,56 @@
+﻿@using CrmExpert.Data
+@using CrmExpert.Model;
+@inject OpportunityService productservice
+<div style="width:100%;">
+    <div class="col">
+
+
+        @if (Notes?.Any() ?? false)
+        {
+
+            @foreach (var Note in Notes)
+            {
+
+
+
+
+                
+
+        <div id="my-account">
+            <div class="flex-row warning-message">
+                @(i++).<i class=@Note.Icon></i><b>User</b><span style="font-size:smaller;color:@Note.Boja;">Datum objave / Executed :</span><span style="font-size:smaller;"> @Note.Created.ToUniversalTime().ToString("ddd d MMM yyyy HH:mm:ss")&nbsp;/&nbsp;@Note.EventTP.ToUniversalTime().ToString("ddd d MMM yyyy HH:mm:ss")</span>
+                <p style="font-size:smaller;">Poruka: @Note.Message</p>
+            </div>
+        </div>
+
+    }
+        }
+        else
+        {
+            <p>No Comment</p>
+        }
+
+    </div>
+</div>
+@code {
+
+    [Parameter]
+    public int  AddId { get; set; }
+    [Parameter]
+    public string OpportunityId { get; set; }
+    public List<Note> Notes { get; set; }
+    int i = 0;
+    protected override void OnInitialized()
+    {
+         Refresh();
+       // Notes =  productservice.getNotesAsyncById(Convert.ToInt32(OpportunityId));
+        // await base.OnParametersSetAsync();
+    }
+
+    public void Refresh()
+    {
+        this.StateHasChanged();
+        i = +1;
+        Notes =  productservice.getNotesById(Convert.ToInt32(OpportunityId));
+    }
+}

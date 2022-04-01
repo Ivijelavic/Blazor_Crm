@@ -1,0 +1,48 @@
+﻿@using Radzen.Blazor
+@using CrmExpert.Data
+@using CrmExpert.Model
+@inject NavigationManager NavigationManager
+@inject OpportunityService productservice
+@inject IJSRuntime JSRuntime;
+
+
+<RadzenButton Icon="add_circle_outline" style="margin-bottom: 10px" Text="Add" Click="@InsertRow" />
+<RadzenDataGrid @ref="stavkeGrid" AllowFiltering="false" AllowPaging="false" AllowSorting="false" EditMode="DataGridEditMode.Single"
+                Data="@stavke" TItem="Stavka" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow">
+    <Columns>
+
+        <RadzenDataGridColumn Width="30px" TItem="Stavka" Property="Stavka.Naziv" Title="Naziv">
+            <EditTemplate Context="stavke">
+                <RadzenDropDown @bind-Value="stavke.Naziv" Data="@artikli" TextProperty="Artikl" ValueProperty="Artikl" Style="width:100%;font-size:small;"
+                               />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Width="30px" TItem="Stavka" Property="Stavka.Brand" Title="Brand">
+            <EditTemplate Context="stavka">
+                <RadzenDropDown Data="@selectedbrands" TextProperty="Vendor" ValueProperty="Vendor" TValue="string" Style="width:100%;font-size:small;"
+                               />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn Width="30px" TItem="Stavka" Property="Stavka.Amount" Title="Cijena">
+            <EditTemplate Context="stavka">
+                <RadzenNumeric TValue="decimal"  Style="width:50%;font-size:small;" Name="Payment" 
+                               />
+
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn Width="20px" TItem="Stavka" Property="Stavka.Percentage" Title="%">
+            <EditTemplate Context="stavka">
+                <RadzenNumeric TValue="decimal" Format="0.00" Min=0 Max=100 Style="width:100%;font-size:small;" />
+
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+
+
+
+
+
+    </Columns>
+</RadzenDataGrid>

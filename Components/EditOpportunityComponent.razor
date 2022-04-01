@@ -1,0 +1,340 @@
+﻿@page "/EditOpportunityComponent/{OpportunityId}"
+
+@using Radzen.Blazor
+@using CrmExpert.Model
+@using CrmExpert.Data
+@inject NavigationManager NavigationManager
+@inject OpportunityService productservice
+
+
+
+<div id="user" class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-md-offset-3">
+            <div class="card login-logout-tab">
+                <div class="card">
+                    <h5 class="card-header">
+                        <i class="fas fa-user-lock"></i>&nbsp;&nbsp;&nbsp;Unos zahtjeva
+                    </h5>
+                    
+                        <div class="col-sm mt-1">
+                                    <div class="panel-body panel-default ml-4  @(Collapsed? "collapse": "")">
+                                        <div class=@poruka>
+                                            @Status
+                                        </div>
+                            </div>
+                        </div>                 
+                        <section>
+                            <EditForm Model=@model OnValidSubmit=@Submit>
+
+
+                                <div class="form-group row form-control-lg">
+                                    <label class="col-sm-3 col-form-label" style="font-size:small;">Vrsta posla: </label>
+                                    <div class="col-sm-9">
+                                        <RadzenDropDown Placeholder="Odaberite vrstu dokumenta" Data="@vrstePrilike" TextProperty="Naziv" ValueProperty="Id_Vrsta_Prilika"
+                                                        TValue="int"
+                                                        Style="width:100%;font-size:medium;" Change=@(args => OnChange(args, "VrstePrilike")) />
+
+                                    </div>
+                                </div>
+                                <div class="form-group row form-control-lg">
+                                    <label class="col-sm-3 col-form-label" style="font-size: small;">Opis opreme:</label>
+                                    <div class="col-sm-9">
+                                        <div style="font-size:10px !important;">
+                                            <InputText id="opis" Class="form-control" @bind-Value="@model.Prilika.OpisObjLeas" Disabled="@odaberitip" />
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row form-control-lg">
+                                    <label class="col-sm-3 col-form-label" style="font-size: small;">Vrijednost opreme:</label>
+                                    <div class="col-sm-9">
+                                        <div style="font-size:10px !important;">
+                                            <RadzenNumeric Style="width:100%" Format="0.00" TValue="Decimal" Placeholder="0,00" Min="0" Max="10000000" Step="1000" @bind-Value="@model.Prilika.Vrijednost_objekta"
+                                                           Change=@(args => OnChange(args, "valueObj")) Disabled="@odaberitip" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row form-control-lg">
+                                    <label class="col-sm-3 col-form-label" style="font-size: small;">Opis zahtjeva:</label>
+                                    <div class="col-sm-9">
+                                        <div style="font-size:10px !important;">
+                                            <RadzenTextArea Id="body" Class="form-control" @bind-Value="@model.Prilika.Naziv" Disabled="@odaberitip"></RadzenTextArea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row form-control-lg mt-5">
+                                    <label class="col-sm-3 col-form-label" style="font-size: small;">Klijenti:</label>
+                                    <div class="col-sm-9">
+                                        <div style="font-size:10px !important;">
+                                            <RadzenDropDown AllowClear="true" AllowFiltering="true" TValue="int"
+                                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                            Multiple="false"
+                                                            Placeholder="Odaberite klijenta" Data=@kontaktils
+                                                            TextProperty="ImeTvrtke" Disabled="@odaberitip"
+                                                            ValueProperty="IDKlijenta" Style="width:100%"
+                                                            Change=@(args => OnChange(args,"Klijent")) />
+
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row form-control-lg">
+                                    <label class="col-sm-3 col-form-label" style="        font-size: small;">Očekivani datum realizacije:</label>
+                                    <div class="col-sm-9">
+                                        <RadzenDatePicker @bind-Value=@dtnow Style="width:100%;font-size:medium;" Change=@(args => OnChange(args, "DateOffer", "dd.MM.yyyy hh:mm")) Class="w-100"
+                                                          ShowTime="true" HourFormat="12" DateFormat="dd.MM.yyyy" Disabled="@odaberitip" />
+
+                                    </div>
+                                </div>
+
+
+
+
+
+
+
+
+                                <div class="row mb-3 mt-6">
+
+                                    <div class="col ">
+
+                                        <div class="card-body">
+                                            <input type="submit" value="Submit" class="btn btn-primary float-right" />
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </EditForm>
+
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    double dblValue { get; set; } = 0.0d;
+    public DateTime? dtnow = DateTime.Now;
+
+
+    bool odaberitip = true;
+
+    public bool Collapsed { get; set; } = true;
+    public string poruka = "alert alert-danger";
+
+    IEnumerable<Klijenti> klijenti;
+    object IDKlijenta;
+    Prilike prilika;
+    List<VrstePrilike> vrstePrilike;
+
+    [Parameter]
+    public string OpportunityId { get; set; }
+    CompositeModelOpp model = new();
+    string Status = "Upis prilike";
+    IEnumerable<int> multipleValues = new int[] { };
+
+
+    public List<int> ListaKontakata { get; set; }
+
+    IEnumerable<KolijentView> kontaktils;
+    object IdKontaktls;
+    List<int> collection;
+
+    void OnChange(DateTime? value, string name, string format)
+    {
+        try
+        {
+            if (IsvalidDateTime(value.ToString()))
+            {
+                model.Prilika.OcekDatReal = Convert.ToDateTime(value);
+            }
+            else
+            {
+                model.Prilika.OcekDatReal = DateTime.Now;
+            }
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+    }
+
+    static bool IsvalidDateTime(string date)
+    {
+        DateTime dt;
+        return DateTime.TryParse(date, out dt);
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        int id = Convert.ToInt32(OpportunityId);
+
+        model = await productservice.Edit(id);
+        /***********************/
+        klijenti =  productservice.GetKlientsList().ToList();
+        kontaktils = productservice.GetKlientsListIEN().ToList();
+        model.Prilika.StatPril = 1;
+        vrstePrilike = await Task.Run(() => productservice.GetVrstePrilike().ToList());
+    }
+
+
+    public async Task Submit(EditContext editContext)
+    {
+
+        if (odaberitip)
+        {
+            Status = "Odaberite tip zahtjeva(vrstu dokumenta)!";
+            Collapsed = false;
+            poruka = "alert alert-danger";
+            await Task.Delay(2000);
+            Collapsed = true;
+            return;
+        }
+        if (model.Prilika.OpisObjLeas == null)
+        {
+            Status = "Unesite opis projekta!";
+            Collapsed = false;
+            poruka = "alert alert-danger";
+            await Task.Delay(2000);
+            Collapsed = true;
+            return;
+        }
+        if (model.Prilika.Vrijednost_objekta > 0 && model.Prilika.Naziv != null)
+        {
+
+            if (model.Prilika.Id_Klijenta == 0)
+            {
+                Status = "Odaberite klijenta!";
+                Collapsed = false;
+                poruka = "alert alert-danger";
+                await Task.Delay(2000);
+                Collapsed = true;
+                return;
+            }
+
+            Status = "Form submitted";
+            bool validated = editContext.Validate();
+
+
+            if (validated)
+            {
+                prilika = new Prilike();
+                prilika = (Prilike)model.Prilika;
+                prilika.StatPril = 1;
+
+                int i = productservice.InsOpportunity(prilika, model.ListaDobavljaca);
+                if (i > 0)
+                {
+                    NavigationManager.NavigateTo("/DataManager");
+                }
+                else
+                {
+
+                    Status = "Došlo je do greške prilikom spremanja prilike";
+                    Collapsed = false;
+                    poruka = "alert alert-danger";
+                    await Task.Delay(7000);
+                    Collapsed = true;
+                }
+            }
+        }
+        else
+        {
+
+            Status = "Unesite naziv i/ili okvirnu vrijednost projekta!";
+            Collapsed = false;
+            poruka = "alert alert-danger";
+            await Task.Delay(7000);
+            Collapsed = true;
+        }
+
+    }
+
+    void OnChange(object value, string name)
+    {
+        //var str = value is IEnumerable<object> ? string.Join(", ", (IEnumerable<object>)value) : value;
+        if (name == "valueObj")
+        {
+            model.Prilika.Vrijednost_objekta = Decimal.Parse(value.ToString());
+        }
+        if (name == "Status")
+        {
+            model.Prilika.StatPril = Int32.Parse(value.ToString());
+        }
+        if (name == "Klijent")
+        {
+            // if (Int32.Parse(value.ToString()) == 0) return;
+            model.Prilika.Id_Klijenta = Int32.Parse(value.ToString());
+        }
+        if (name == "VrstePrilike")
+        {
+            // if (Int32.Parse(value.ToString()) == 0) return;
+            model.Prilika.Id_Vrsta_Prilika = Int32.Parse(value.ToString());
+            if (model.Prilika.Id_Vrsta_Prilika > 0) odaberitip = false;
+        }
+        if (name == "Dobavljaci")
+        {
+            if (model.ListaDobavljaca != null)
+            {
+                model.ListaDobavljaca.Clear();
+            }
+            if (value != null)
+            {
+                List<int> collection = new List<int>((IEnumerable<int>)value);
+                if (collection.Count > 0)
+                {
+                    foreach (int num in collection)
+                    {
+                        model.ListaDobavljaca.Add(num);
+                    }
+                }
+            }
+
+        }
+        else if (name == "Kolaterali")
+        {
+            model.Prilika.Id_Kolateral = Int32.Parse(value.ToString());
+        }
+        else if (name == "Jamac")
+        {
+            model.Prilika.idJamac = Int32.Parse(value.ToString());
+        }
+
+        var str = value is IEnumerable<object> ? string.Join(", ", (IEnumerable<object>)value) : value;
+    }
+
+
+    void OnChangeKlijenti(object value, string name)
+    {
+        if (ListaKontakata != null)
+        {
+            model.ListaDobavljaca.Clear();
+        }
+        else
+        {
+            model.ListaDobavljaca = new();
+        }
+        if (value != null)
+        {
+            List<int> collection = new List<int>((IEnumerable<int>)value);
+            if (collection.Count > 0)
+            {
+                foreach (int num in collection)
+                {
+                    model.ListaDobavljaca.Add(num);
+                }
+            }
+        }
+    }
+
+
+
+
+}

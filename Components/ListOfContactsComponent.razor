@@ -1,0 +1,49 @@
+﻿@using CrmExpert.Data
+@using CrmExpert.Model
+@inject NavigationManager NavigationManager
+@inject OpportunityService productservice
+
+@if (kontakti == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="d-flex p-2 bd-highlight">
+        <NavLink class="oi oi-plus" href="AddContact/0"><font style="font-family:Arial;">...Create New Contact</font></NavLink>
+    </div>
+    <RadzenGrid AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowPaging="true" PageSize="6"
+                AllowSorting="true" Data="@kontakti" TItem="Kontakti" ColumnWidth="100px" RowSelect=@RowSelect>
+        <Columns>
+            <RadzenGridColumn TItem="Kontakti" Property="Ime" Title="Id"> </RadzenGridColumn>
+            <RadzenGridColumn TItem="Kontakti" Property="Prezime" Title="Naziv"> </RadzenGridColumn>
+            <RadzenGridColumn TItem="Kontakti" Property="Adresa" Title="Adresa"> </RadzenGridColumn>
+            <RadzenGridColumn TItem="Kontakti" Property="Grad" Title="Grad"> </RadzenGridColumn>
+            <RadzenGridColumn TItem="Kontakti" Property="PostanskiBroj" Title="PostanskiBroj"></RadzenGridColumn>
+            <RadzenGridColumn TItem="Kontakti" Property="Telefon" Title="Telefon"></RadzenGridColumn>
+            <RadzenGridColumn TItem="Kontakti" Property="Komentar" Title="Komentar"></RadzenGridColumn>
+
+        </Columns>
+    </RadzenGrid>
+
+
+}
+
+
+
+@code {
+    IEnumerable<Kontakti> kontakti;
+    protected override async Task OnInitializedAsync()
+    {
+        kontakti = await Task.Run(() => productservice.GetContacts());
+    }
+
+    private string KontaktId = "";
+    public string url = "AddContact";
+    void RowSelect(Kontakti kontakt)
+    {
+        KontaktId = kontakt.id.ToString();
+
+        NavigationManager.NavigateTo(url + "/" + KontaktId);
+    }
+}

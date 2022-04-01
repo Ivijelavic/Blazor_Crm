@@ -1,0 +1,45 @@
+﻿@using Radzen.Blazor
+@using CrmExpert.Data
+@using CrmExpert.Model
+@inject NavigationManager NavigationManager
+@inject OpportunityService productservice
+
+@if (klijenti == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="d-flex p-2 bd-highlight">
+        <NavLink class="oi oi-plus" href="AddClient/0/0"><font style="font-family:Arial;">...CNovi klijent</font></NavLink>
+    </div>
+    <RadzenGrid AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowPaging="true" PageSize="6"
+                AllowSorting="true" Data="@klijenti" TItem="Klijenti" ColumnWidth="100px" RowSelect=@RowSelect>
+        <Columns>
+            <RadzenGridColumn TItem="Klijenti" Property="Tip" Title="Tip"> </RadzenGridColumn>
+            <RadzenGridColumn TItem="Klijenti" Property="ImeTvrtke" Title="Naziv"> </RadzenGridColumn>
+            <RadzenGridColumn TItem="Klijenti" Property="Adresa" Title="Adresa"> </RadzenGridColumn>
+            <RadzenGridColumn TItem="Klijenti" Property="Sjediste" Title="Sjediste"> </RadzenGridColumn>
+            <RadzenGridColumn TItem="Klijenti" Property="PostanskiBroj" Title="PostanskiBroj"></RadzenGridColumn>
+            <RadzenGridColumn TItem="Klijenti" Property="OIB" Title="OIB"></RadzenGridColumn>
+            <RadzenGridColumn TItem="Klijenti" Property="EmailAdresa" Title="EmailAdresa"></RadzenGridColumn>
+
+        </Columns>
+    </RadzenGrid>
+
+}
+@code {
+    IEnumerable<Klijenti> klijenti;
+    protected override async Task OnInitializedAsync()
+    {
+        klijenti = await Task.Run(() => productservice.GetKlientsList());
+    }
+    private string KlijentId = "";
+    public string url = "AddClient";
+    void RowSelect(Klijenti klijent)
+    {
+        KlijentId = klijent.IDKlijenta.ToString();
+
+        NavigationManager.NavigateTo(url + "/" + KlijentId + "/0");
+    }
+}

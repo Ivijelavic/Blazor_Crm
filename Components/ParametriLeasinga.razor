@@ -1,0 +1,133 @@
+﻿@using CrmExpert.Data
+@using CrmExpert.Components
+@using CrmExpert.Model
+@inject OpportunityService productservice
+@inject CrmExpert.Model.SelectedPonudaDobavljac AppData
+
+
+<div class="card">
+    <h5 class="card-header">
+        <i class="fas  fa-landmark"></i>&nbsp;&nbsp;&nbsp;Parametri Leasinga
+    </h5>
+    <div class="card-body">
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon1"><i class="fas fa-file-invoice-dollar" title="Vrijednost objekta"></i></span>
+            </div>
+            <input type="text" class="form-control" placeholder="Vrijednost objekta" aria-label="Vrijednost objekta" aria-describedby="basic-addon1" @bind-value="@ukupno">
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon1"><i class="fas fa-compass" title="Vrsta leasinga"></i></span>
+            </div>
+            <input type="text" class="form-control" placeholder="Vrsta leasinga" aria-label="Vrsta leasinga" aria-describedby="basic-addon1">
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon1" title="Valuta ponude"><i class="fas fa-comment-dollar" title="Valuta ponude"></i></span>
+            </div>
+            <input type="text" class="form-control" placeholder="Valuta ponude" aria-label="Valuta ponude" aria-describedby="basic-addon1">
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon1"><i class="fas fa-clock" title="Datum ponude"></i></span>
+            </div>
+            <input type="text" class="form-control" placeholder="Datum ponude" aria-label="Datum ponude" aria-describedby="basic-addon1">
+        </div>
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon1" title="TRAJANJE UGOVORA"><i class="fas fa-chart-line" title="TRAJANJE UGOVORA"></i></span>
+            </div>
+            <input type="text" class="form-control" placeholder="TRAJANJE UGOVORA" aria-label="TRAJANJE UGOVORA" aria-describedby="basic-addon1">
+        </div>
+
+
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon1"><i class="fas fa-coins" title="Način plaćanja"></i></span>
+            </div>
+            <input type="text" class="form-control" placeholder="Način plaćanja" aria-label="Način plaćanja" aria-describedby="basic-addon1">
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon1"><i class="fas fa-hand-holding-usd" title="Trošak obrade"></i></span>
+            </div>
+            <input type="text" class="form-control" placeholder="Trošak obrade" aria-label="Trošak obrade" aria-describedby="basic-addon1">
+        </div>
+
+
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon1"><i class="fas fa-dolly" title="Ostatak vrijednosti"></i></span>
+            </div>
+            <input type="text" class="form-control" placeholder="Ostatak vrijednosti" aria-label="Ostatak vrijednosti" aria-describedby="basic-addon1">
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon1"><i class="fas fa-user-shield" title="Jamčevina"></i></span>
+            </div>
+            <input type="text" class="form-control" placeholder="Jamčevina" aria-label="Jamčevina" aria-describedby="basic-addon1">
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon1"><i class="fas fa-donate" title="Akontacija"></i></span>
+            </div>
+            <input type="text" class="form-control" placeholder="Akontacija" aria-label="Akontacija" aria-describedby="basic-addon1">
+        </div>
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon1"><i class="fas fa-cubes" title="Učešće"></i></span>
+            </div>
+            <input type="text" class="form-control" placeholder="Učešće" aria-label="Učešće" aria-describedby="basic-addon1">
+        </div>
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon1"><i class="fas fa-award" title="Ostatak vrijednosti"></i></span>
+            </div>
+            <input type="text" class="form-control" placeholder="Ostatak vrijednosti" aria-label="Ostatak vrijednosti" aria-describedby="basic-addon1">
+        </div>
+    </div>
+</div>
+@code {
+    public decimal ukupno { get; set; }
+
+    public string OfferId { get; set; }
+    List<ListaPonudaDobavljaciView> selected = new();
+    private string currentCount = "";
+    protected override void OnInitialized()
+    {
+        // currentCount = selectedProducts.CountProduct();
+        currentCount = AppData.CountProduct();
+        selected = AppData.SelectedGridDobavljaci;
+        ukupno = ukupnaVrijednost();
+        foreach (ListaPonudaDobavljaciView pr in selected)
+        {
+            OfferId = pr.Id_Prilike.ToString();
+        }
+
+    }
+    string Klijent;
+    public string getKlijent(int idPrilike)
+    {
+        ResultViewOpportunity opp = productservice.OpportunityById(idPrilike);
+
+        return opp.ImeKlijenta;
+    }
+
+    public decimal ukupnaVrijednost()
+    {
+
+        foreach (ListaPonudaDobavljaciView pr in selected)
+        {
+            ukupno = ukupno + pr.VrijednostPondeVal;
+        }
+        return ukupno;
+    }
+
+}
